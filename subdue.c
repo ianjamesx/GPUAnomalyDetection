@@ -25,6 +25,31 @@ void err(char *message){
 }
 
 /*
+string cleaning
+*/
+void removeCharacter(char* str, char c) {
+    char *pr = str, *pw = str;
+    while (*pr) {
+        *pw = *pr++;
+        pw += (*pw != c);
+    }
+    *pw = '\0';
+}
+
+void cleanString(char *str){
+  removeCharacter(str, '.');
+  removeCharacter(str, '\n');
+  removeCharacter(str, ' ');
+}
+
+void cleanManyStrings(char **stringArr, int count){
+  int i;
+  for(i = 0; i < count; i++){
+    cleanString(stringArr[i]);
+  }
+}
+
+/*
 display percentage based on amount done and total
 */
 int percentread(int curr, int total, char *message){
@@ -164,16 +189,11 @@ double *numberfyRecord(char **recordtokens){
 
 int getTypeIndex(char **alltypes, char *currtype){
 
-  if(strcmp("normal.\n", currtype) == 0){
-    return -1;
-  } else {
-    printf("is something else\n");
-  }
+  cleanString(currtype);
 
   int i;
   for(i = 0; i < ATTACKS; i++){
     if(strcmp(alltypes[i], currtype) == 0){
-      printf("is %s\n", currtype);
       return i;
     }
   }
@@ -240,14 +260,13 @@ int main(int argc, char **argv){
   
   //split attacks into array of types to match up indices
   char **attacks = getAttackTypes(attacktypes);
+  cleanManyStrings(attacks, ATTACKS);
 
   //type of record (normal or attack type), value corresponds to name of attack in **attacks, index corresponds to index in records list 
-  int *recordtypes = malloc(sizeof(int) * ATTACKS);
+  int *recordtypes = malloc(sizeof(int) * recordTotal);
 
   //convert all records to numeric (double) records
   double **data = createNumericRecords(records, recordTotal, recordtypes, attacks);
-
-
 
   return 0;
 
