@@ -1,3 +1,3 @@
 #!/bin/bash
-gcc -c subdue.c
-gcc -o subdue subdue.o
+gcc -c main.c
+gcc -o main main.o
