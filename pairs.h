@@ -4,29 +4,33 @@ for 2d arrays, to save space, use 1d array
 keep track of rows and columns
 */
 
-#define INDEX(r,c,i,j) i*r + j
+#define PAIRINDEX(r,c, i, j, p) i*r + j
 
-typedef struct Matrix {
-  int rows;
-  int cols;
+typedef struct Pairs {
+  
+  int k;    //length of a pair (usually just 2 or 3)
+  int n;    //number of pairings per record
+  int rows; //number of records
   double *data;
-} Matrix;
+
+} Pairs;
 
 /*
 allocate for matrix
 */
-void initMatrix(Matrix *M, int r, int c){
-  M->rows = r;
-  M->cols = c;
+void initPairs(Pairs *P, int k, int n, int r){
+  P->k = k;
+  P->n = n;
+  P->rows = r;
 
-  int size = (r*c) * sizeof(double);
-  M->data = malloc(size);
+  int size = (k*n*r) * sizeof(double);
+  P->data = malloc(size);
 }
 
 /*
 write single element to matrix
 */
-void writeMatrix(Matrix *M, double val, int i, int j){
+void writePairs(Matrix *M, double val, int i, int j){
     int index = INDEX(M->rows, M->cols, i, j);
     M->data[index] = val;
 }
@@ -34,7 +38,7 @@ void writeMatrix(Matrix *M, double val, int i, int j){
 /*
 get element from matrix
 */
-double getValue(Matrix *M, int i, int j){
+double getPair(Matrix *M, int record, int pair){
   int index = INDEX(M->rows, M->cols, i, j);
   return M->data[index];
 }

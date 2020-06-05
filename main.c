@@ -8,6 +8,12 @@
 #include "matrix.h"
 #include "hostread.h"
 
+void generatePairs(Matrix M){
+
+
+
+}
+
 int main(int argc, char **argv){
 
     Matrix M;
@@ -17,9 +23,33 @@ int main(int argc, char **argv){
     hostread(&M, recordflags, attacks);
 
     //printRow(&M, 23);
+
+    return 0;
 }
 
-[4,2,41,3,5,4,12,4,15,34,53,1,4,1,2,41,2]
-[4,2,41,3,5,4,12,4,15,34,53,1,4,1,2,41,2]
-[4,2,41,3,5,4,12,4,15,34,53,1,4,1,2,41,2]
+/*
 
+
+
+*/
+
+/*
+
+parent-linked list approach
+
+original records:
+[4,1,3,5]
+[4,1,2,5]
+[0,1,2,5]
+
+...
+
+parentlist  := [(4,1), (2,5)]
+
+[
+    0 -> 0
+    1 -> 0 -> 1
+    2 -> 1
+]
+
+*/
