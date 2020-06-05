@@ -1,13 +1,11 @@
 /*
-matrix operations
-for 2d arrays, to save space, use 1d array
-keep track of rows and columns
+pair operations
 */
 
-#define PAIRINDEX(r,c, i, j, p) i*r + j
+#define PAIRINDEX(r,c, i, j) i*r + j
 
 typedef struct Pairs {
-  
+
   int k;    //length of a pair (usually just 2 or 3)
   int n;    //number of pairings per record
   int rows; //number of records
@@ -15,66 +13,66 @@ typedef struct Pairs {
 
 } Pairs;
 
+int nk_count(int n, int k){
+
+  if (k > n) return 0;
+  if (k * 2 > n) k = n-k;
+  if (k == 0) return 1;
+
+  int result = n;
+  for( int i = 2; i <= k; ++i ) {
+      result *= (n-i+1);
+      result /= i;
+  }
+  return result;
+
+}
+
+
 /*
-allocate for matrix
+allocate for pairs
 */
 void initPairs(Pairs *P, int k, int n, int r){
   P->k = k;
   P->n = n;
   P->rows = r;
 
-  int size = (k*n*r) * sizeof(double);
+  int nk = nk_count(n, k);
+
+  int size = (nk * r) * sizeof(double);
+  //printf("Allo %d\n", size);
   P->data = malloc(size);
 }
 
 /*
-write single element to matrix
+write single pairing to matrix
 */
-void writePairs(Matrix *M, double val, int i, int j){
-    int index = INDEX(M->rows, M->cols, i, j);
-    M->data[index] = val;
+void savePair(Pairs *P, double pair[], int i, int j){
+  int index = PAIRINDEX(P->rows, P->n, i, j);
+  int l, k = P->k;
+
+  for(l = 0; l < k; l++){
+    P->data[index + l] = pair[l];
+  }
 }
 
 /*
-get element from matrix
+return an array of pairs from matrix
 */
-double getPair(Matrix *M, int record, int pair){
-  int index = INDEX(M->rows, M->cols, i, j);
-  return M->data[index];
-}
+double *getPair(Pairs *P, int i, int j){
 
-/*
-copy array to a matrix
-then free array
-*/
-void transferArray(Matrix *M, double *array, int row_index){
-  int i;
-  for(i = 0; i < M->cols; i++){
-    writeMatrix(M, array[i], row_index, i);
+  int index = PAIRINDEX(P->rows, P->n, i, j);
+  int l, k = P->k;
+
+  //populate array with all elements of this pair
+  double *pairs = malloc(sizeof(double) * k);
+  for(l = 0; l < k; l++){
+    pairs[l] = P->data[index + l];
   }
-  free(array);
+
+  return pairs;
 }
 
-void freeMatrix(Matrix *M){
-  free(M->data);
-}
-
-void printMatrix(Matrix *M){
-  int i, j;
-  for(i = 0; i < M->rows; i++){
-    for(j = 0; j < M->cols; j++){
-      int index = INDEX(M->rows, M->cols, i, j);
-      printf("%.2f ", M->data[index]);
-    }
-    printf("\n");
-  }
-}
-
-void printRow(Matrix *M, int row){
-  int i;
-  for(i = 0; i < M->cols; i++){
-    int index = INDEX(M->rows, M->cols, row, i);
-    printf("%d: %.2f ", i, M->data[index]);
-    printf("\n");
-  }
+void freePairs(Pairs *P){
+  free(P->data);
 }

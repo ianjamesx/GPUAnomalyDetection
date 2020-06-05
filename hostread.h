@@ -46,7 +46,7 @@ void cleanManyStrings(char **stringArr, int count){
 /*
 display percentage based on amount done and total
 */
-int percentread(int curr, int total, char *message){
+void percentread(int curr, int total, char *message){
 
   int best = total/20;
   if(curr % best == 0){
@@ -153,11 +153,11 @@ Feature **readFeatures(char *path, char **attacks){
 
 }
 
-double hash(unsigned char *str){
+double hash(char *str){
     unsigned long hash = 5381;
     int c;
 
-    while (c = *str++)
+    while ((c = *str++))
         hash = ((hash << 5) + hash) + c;
 
     return (double) hash;
@@ -207,7 +207,7 @@ char **getAttackTypes(char *attacks){
 
   char **allattacks = (char**) malloc(ATTACKS * sizeof(char *));
   int i = 0;
-  
+
   //split str at ,
   char *attack = strtok(attacks, ",");
   while(attack != NULL){
@@ -244,7 +244,7 @@ void generateRecordMatrix(Matrix *M, char **records, int recordcount, int *recor
     double *numberfied = numberfyRecord(rec);
     transferArray(M, numberfied, i);
 
-    //get type of 
+    //get type of
     recordtypes[i] = getTypeIndex(alltypes, rec[FEATURES-1]);
     percentread(i, recordcount, "converted...");
 
@@ -279,12 +279,12 @@ void hostread(Matrix *M, int *recordtypes, char **attacks){
   //also get all features of a record for reference, as well as attack types
   char *attacktypes;
   Feature **features = readFeatures(featuresetPath, &attacktypes);
-  
+
   //split attacks into array of types to match up indices of values in recordtypes
   attacks = getAttackTypes(attacktypes);
   cleanManyStrings(attacks, ATTACKS);
 
-  //type of record (normal or attack type), value corresponds to name of attack in **attacks, index corresponds to index in records list 
+  //type of record (normal or attack type), value corresponds to name of attack in **attacks, index corresponds to index in records list
   recordtypes = malloc(sizeof(int) * recordTotal);
 
   //convert all records to numeric (double) records, put into a matrix

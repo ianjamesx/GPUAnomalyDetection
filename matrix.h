@@ -26,7 +26,7 @@ void initMatrix(Matrix *M, int r, int c){
 /*
 write single element to matrix
 */
-void writeMatrix(Matrix *M, double val, int i, int j){
+void writeValue(Matrix *M, double val, int i, int j){
     int index = INDEX(M->rows, M->cols, i, j);
     M->data[index] = val;
 }
@@ -46,7 +46,7 @@ then free array
 void transferArray(Matrix *M, double *array, int row_index){
   int i;
   for(i = 0; i < M->cols; i++){
-    writeMatrix(M, array[i], row_index, i);
+    writeValue(M, array[i], row_index, i);
   }
   free(array);
 }
