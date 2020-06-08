@@ -9,24 +9,30 @@
 #include "pairs.h"
 #include "hostread.h"
 
+/*
+index - current record index, used for storing record pairing
+*/
 void saveRecordPairs(Pairs *P, Matrix M, int index){
 
   int i, j;
 
-  int total = 0;
+  int pairindex = 0;
 
   for(i = 0; i < M.cols; i++){
     for(j = i+1; j < M.cols; j++){
-      int pairIndex = (i * M.cols) + j;
-      printf("%d| %d %d | %.2f %.2f\n", pairIndex, i, j, getValue(&M, index, i), getValue(&M, index, j));
-      total++;
-      double pair[2] = {getValue(&M, index, i), getValue(&M, index, j)};
-      //savePair(&P, pair, index, pairIndex);
+      
+      //generate pair
+      double *pair = malloc(sizeof(double) * 2);
+      pair[0] = getValue(&M, index, i);
+      pair[1] = getValue(&M, index, j);
+      
+      //save
+      savePair(P, pair, index, pairindex);
+      pairindex++;
+    
     }
-    printf("----------\n");
-  }
 
-  printf("%d\n", total);
+  }
 
 }
 
@@ -38,9 +44,11 @@ void generatePairs(Matrix M){
   initPairs(&P, pairsize, M.cols, M.rows);
 
   int i;
-  for(i = 0; i <1; i++){
+  for(i = 0; i < M.rows; i++){
     saveRecordPairs(&P, M, i);
   }
+
+  //fullprint(&P);
 
 }
 
@@ -55,17 +63,6 @@ int main(int argc, char **argv){
     printRow(&M, 0);
 
     generatePairs(M);
-
-    printf("%d\n", nk_count(40, 2));
-
-    /*int test[] = {1,2,3,4};
-
-    int i, j, l;
-    for(i = 0; i < 4; i++){
-      for(j = i+1; j < 4; j++){
-        printf("%d, %d\n", test[i], test[j]);
-      }
-    }*/
 
     return 0;
 }
