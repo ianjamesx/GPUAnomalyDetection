@@ -13,7 +13,7 @@ void getPairIndex_real(int row, int i, int j, int k, int *index){
 /*
 save pair of attributes from a record index to its corresponding pair index
 */
-void savePair(double *all_pairs, double *record, int record_count, int record_index, int record_indices[], int pair_index, int k){
+void savePair(double *all_pairs, double *recordlist, int record_count, int record_index, int record_indices[], int pair_index, int k){
     
     //get starting index of pair for all_pairs array
     int pairindex_start;
@@ -25,9 +25,9 @@ void savePair(double *all_pairs, double *record, int record_count, int record_in
 
         //get indices for list of pairs, and list of record indices to copy over
         int all_pair_index = (pairindex_start + i);
-        int record_attribute_index = record_indices[i];
+        int record_attribute_index = (record_count * record_index) + record_indices[i];
 
-        all_pairs[all_pair_index] = record[record_attribute_index];
+        all_pairs[all_pair_index] = recordlist[record_attribute_index];
     }
 
 }
@@ -35,7 +35,7 @@ void savePair(double *all_pairs, double *record, int record_count, int record_in
 /*
 retrieve a pair of attributes from list of all pairs
 */
-void getPair(double *all_pairs, double pair[], int pair_i, int pair_j, int k){
+void getPair(double *all_pairs, int record_count, int record_index, int pair_index, int k, double *pair){
 
     int pairindex_start;
     getPairIndex_real(record_count, record_index, pair_index, k, &pairindex_start);
@@ -43,7 +43,7 @@ void getPair(double *all_pairs, double pair[], int pair_i, int pair_j, int k){
     int i;
     for(i = 0; i < k; i++){
         int all_pair_index = (pairindex_start + i);
-        pair[i] = all_pairs[all_pair_index]
+        pair[i] = all_pairs[all_pair_index];
     }
 
 }
@@ -52,9 +52,14 @@ void getPair(double *all_pairs, double pair[], int pair_i, int pair_j, int k){
 sets equal to 1 if pairs are equal
 sets equal to 0 if pairs are not equal
 */
-void comparePairs(double pair_1[], double pair_2[], int k, int *equal){
+void comparePairs(double *all_pairs, int record_count, int record_index_1, int pair_start_1, int record_index_2, int pair_start_2, int k, int *equal){
 
     *equal = 1;
+
+    int pair_index_1, pair_index_2;
+
+    getPairIndex_real(record_count, record_index_1, pair_start_1, k, &pair_index_1);
+    getPairIndex_real(record_count, record_index_1, pair_start_1, k, &pair_index_1);
 
     int i;
     for(i = 0; i < k; i++){
