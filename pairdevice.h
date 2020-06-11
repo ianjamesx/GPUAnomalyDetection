@@ -7,7 +7,44 @@ get starting index of a pair based off
     j   - index of pair
 */
 void getPairIndex_real(int row, int i, int j, int k, int *index){
-    *index = (i*row + j) * k;
+    *index = (i * row + j) * k;
+}
+
+void printPair_full(double *all_pairs, int record_count, int record_index, int pair_index, int pair_size){
+
+    int pairindex_start;
+    getPairIndex_real(record_count, record_index, pair_index, pair_size, &pairindex_start);
+
+    int i;
+    for(i = 0; i < pair_size; i++){
+        int pair_index_real = (pairindex_start + i);
+        printf("%.2f ", all_pairs[pair_index_real]);
+    }
+
+    printf("\n");
+
+}
+
+void printAllPairs_full(double *all_pairs, int record_count, int record_index, int pair_count, int pair_size){
+
+    int i, j;
+
+    for(i = 0; i < pair_count; i++){
+
+        int pairindex_start;
+        getPairIndex_real(record_count, record_index, i, pair_size, &pairindex_start);
+
+        printf("Pair %d (%d) : ", i, pairindex_start);
+
+        for(j = 0; j < pair_size; j++){
+            int pair_index_real = (pairindex_start + i);
+            printf("%.2f ", all_pairs[pair_index_real]);
+        }
+
+         printf("\n");
+
+    }
+
 }
 
 /*
@@ -52,22 +89,72 @@ void getPair(double *all_pairs, int record_count, int record_index, int pair_ind
 sets equal to 1 if pairs are equal
 sets equal to 0 if pairs are not equal
 */
-void comparePairs(double *all_pairs, int record_count, int record_index_1, int pair_start_1, int record_index_2, int pair_start_2, int k, int *equal){
+void comparePairs(double *all_pairs, int record_count, int record_index_1, int record_index_2, int pair_index, int k, int *equal){
 
     *equal = 1;
 
+    //get starting index of both pairs
     int pair_index_1, pair_index_2;
-
-    getPairIndex_real(record_count, record_index_1, pair_start_1, k, &pair_index_1);
-    getPairIndex_real(record_count, record_index_1, pair_start_1, k, &pair_index_1);
+    getPairIndex_real(record_count, record_index_1, pair_index, k, &pair_index_1);
+    getPairIndex_real(record_count, record_index_2, pair_index, k, &pair_index_2);
 
     int i;
     for(i = 0; i < k; i++){
-        //if one attribute of pair is not equal, we can break early
-        if(pair_1[i] != pair_2[i]){
+
+        int pair_1_curr_index = (pair_index_1 + i);
+        int pair_2_curr_index = (pair_index_2 + i);
+
+        printf("%.2f %.2f\n", all_pairs[pair_1_curr_index], all_pairs[pair_2_curr_index]);
+
+        //if we find two pairs have an element that does not match
+        //set equal to 0, break early
+        if(all_pairs[pair_1_curr_index] != all_pairs[pair_2_curr_index]){
             *equal = 0;
-            break;
+            //break;
         }
+
     }
 
 }
+
+void pairInParentList(double *all_pairs, double *parent_list, int record_count, int record_index, int pair_index, int k, int *parent_index){
+
+    *parent_index = -1;
+
+    //get starting index of pair to search for
+    int pair_index_real;
+    getPairIndex_real(record_count, record_index, pair_index, k, &pair_index);
+
+    int i, j;
+
+    for(i = 0; i < record_count; i++){
+
+        int parent_index_curr;
+        getPairIndex_real(record_count, i, pair_index_real, k, &parent_index_curr);
+
+        int match = 1;
+
+        //compare each element of pair to current pair in parent list
+        for(j = 0; j < k; j++){
+
+            int pair_curr = (pair_index_real + i);
+            int parent_curr = (parent_index_curr + i);
+
+            //if we find two pairs have an element that does not match
+            //set equal to 0, break early
+            if(all_pairs[pair_curr] != parent_list[parent_curr]){
+                match = 0;
+            }
+
+        }
+
+        //if we have a match, set return index to index found in parent list
+        if(match){
+            *parent_index = i;
+        }
+
+    }
+
+}
+
+//void savePairToParentList()

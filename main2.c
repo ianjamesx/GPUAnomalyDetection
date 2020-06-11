@@ -17,7 +17,7 @@
 void generatePairs(double *recordlist, double *pairlist, int record_count, int record_size){
 
     int i, j, l;
-    for(i = 0; i < record_count; i++){ //<-- stride here
+    for(i = 0; i < record_count; i++){ //<-- stride here by unique id
 
         int pair_index = 0;
 
@@ -25,6 +25,8 @@ void generatePairs(double *recordlist, double *pairlist, int record_count, int r
             for(l = j+1; l < record_size; l++){
 
                 int record_indices[2] = {j, l};
+
+                printf("Pair %.2f %.2f\n", recordlist[record_indices[0]], recordlist[record_indices[1]]);
 
                 savePair(pairlist, recordlist, record_count, i, record_indices, pair_index, pair_size);
                 
@@ -35,7 +37,17 @@ void generatePairs(double *recordlist, double *pairlist, int record_count, int r
     }
 }
 
-void compressPairs(double *pairlist, double *parent_list, double *output_list, int record_count, int pair_count){
+/*
+distribute a unique pairing to each thread-block
+thread block will find all patterns in pairings and move to the output buffer
+then threads will search output buffer for duplicates, and merge into list of unique patterns
+keeping track of number of occurances for each
+
+also, replace the pattern in the pairlist with the index in parent list
+will have to use negative index
+*/
+/*
+void locatePatterns(double *pairlist, double *output_buffer, int *occurance_list, int record_count, int pair_count){
 
     int i, j, l;
 
@@ -65,6 +77,11 @@ void compressPairs(double *pairlist, double *parent_list, double *output_list, i
     }
 
 }
+
+void reducePatterns(double *parent_list, double *output_buffer){
+
+
+}*/
 
 int main(int argc, char **argv){
 
@@ -119,7 +136,22 @@ int main(int argc, char **argv){
     run compression phase 1
     */
 
-    int nk = int nk_count(record_size, pair_size);
+    int nk = nk_count(record_size, pair_size);
+
+    printRecord_full(recordlist, record_count, record_size, 0);
+    printf("------\n");
+    
+    //printPair_full(pairlist, record_count, 1, 2, pair_size);
+    //printPair_full(pairlist, record_count, 2, 2, pair_size);
+    //printRecord_full(recordlist, record_count, record_size, 1);
+
+    //printAllPairs_full(pairlist, record_count, 0, nk, pair_size);
+
+    int equal = 5;
+    printf("COMPARING record 1, record 2, pair 2\n");
+    comparePairs(pairlist, record_count, 1, 2, 2, pair_size, &equal);
+
+    printf("\n equal is %d\n", equal);
 
     return 0;
 }
