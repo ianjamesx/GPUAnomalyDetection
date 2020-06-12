@@ -16,6 +16,9 @@ void getRecordAttributeIndex_real(int r, int i, int j, int *index){
     *index = (i * r) + j;
 }
 
+void getOccuranceIndex_real(int r, int i, int j, int *index){
+    *index = (i * r) + j;
+}
 
 void printPair_full(double *all_pairs, int pair_count, int record_index, int pair_index, int pair_size){
 
@@ -96,6 +99,53 @@ void copyPair(double *src, double *dest, int pair_count, int record_index, int p
         int curr_index = (pairindex_real + i);
         dest[curr_index] = src[curr_index];
     }
+}
+
+/*
+increment occurances in occurance array
+*/
+void addOccurances(int *occurance_list, int record_count, int pattern_index, int pair_index, int occurances){
+
+    int occuranceindex_real;
+    getOccuranceIndex_real(record_count, pattern_index, pair_index, &occuranceindex_real);
+
+    occurance_list[occuranceindex_real] += occurances;
+    //printf("added %d to %d %d: %d\n", occurances, record_count, pair_index,  occurance_list[occuranceindex_real]);
+
+}
+
+void printOccurances(int *occurance_list, int record_count, int pair_count){
+/*
+    int occlen = pair_count * record_count;
+    int i;
+
+    for(i = 0; i < occlen; i++){
+        if(occurance_list[i] > 0){
+            printf("Pair %d\n", occurance_list[i]);
+        }
+    }
+*/
+
+    int i, j;
+    for(i = 0; i < pair_count; i++){
+
+        if(i != 711) continue;
+
+        printf("Pair (%d): ", i);
+
+        for(j = 0; j < record_count; j++){
+
+            int occuranceindex_real;
+            getOccuranceIndex_real(record_count, j, i, &occuranceindex_real);
+
+            printf("%d ", occurance_list[occuranceindex_real]);
+
+        }
+
+        printf("\n");
+
+    }
+
 }
 
 /*

@@ -69,6 +69,9 @@ void locatePatterns(double *pairlist, double *output_buffer, int *occurance_list
             //index of the record to compare all others to
             int curr_record1 = i;
 
+            //number of occurances of this pattern in other records
+            int occurances = 0;
+
             for(j = i+1; j < record_count; j++){
 
                 int curr_record2 = j;
@@ -81,6 +84,8 @@ void locatePatterns(double *pairlist, double *output_buffer, int *occurance_list
  
                     copyPair(pairlist, output_buffer, record_count, curr_record1, curr_pair, pair_size);
 
+                    occurances++;
+
                     matches++;
 
                 }
@@ -88,6 +93,15 @@ void locatePatterns(double *pairlist, double *output_buffer, int *occurance_list
                 comps++;
 
             }
+
+            if(curr_pair == 711){
+                printf("~~\n");
+                printPair_full(pairlist, pair_count, curr_record1, curr_pair, pair_size);
+            }
+            
+
+            addOccurances(occurance_list, record_count, curr_record1, curr_pair, occurances);
+
         }
 
     }
@@ -150,7 +164,7 @@ int main(int argc, char **argv){
 
     //list of occurances of each substructure, indices align to parentlist
     int *occurancelist;
-    occuranceList_init(&occurancelist, record_count, record_size, 1);
+    occuranceList_init(&occurancelist, record_count, record_size, pair_size);
 
     /*
     run compression phase 1
@@ -177,7 +191,11 @@ int main(int argc, char **argv){
 
     printf("-----\n");
 
-    printAllPairsFromBuffer_full(outputlist_buffer, 2, pair_count, 20, pair_size);
+    printAllPairsFromBuffer_full(outputlist_buffer, 2, pair_count, 711, pair_size);
+
+    printf("-----\n");
+
+    printOccurances(occurancelist, record_count, pair_count);
 
     //printAllPairs_full(outputlist_buffer, pair_count, 0, pair_size);
 

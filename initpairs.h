@@ -25,15 +25,14 @@ void pairList_init(double **parent_list, int record_count, int record_attribute_
     *parent_list = malloc(size);
 }
 
-void occuranceList_init(int **occurance_list, int record_count, int record_attribute_count, int pair_length){
+void occuranceList_init(int **occurance_list, int record_count, int record_attribute_count, int pair_size){
 
     //number of unique pairings per record (CkN, or N choose K)
-    int nk = nk_count(record_attribute_count, pair_length);
+    int nk = nk_count(record_attribute_count, pair_size);
 
-    //for allocating each records pairings, we need k (pair_length) spaces for each pair
-    int record_pairspace = nk * pair_length;
+    printf("size: %d\n", (nk * record_count));
 
-    int size = (record_pairspace * record_count) * sizeof(int);
+    int size = (nk * record_count) * sizeof(int);
     *occurance_list = malloc(size);
 }
 
