@@ -9,6 +9,7 @@
 #include "recorddevice.h"
 #include "pairdevice.h"
 #include "initpairs.h"
+#include "parentlist.h"
 #include "hostread.h"
 
 #define pair_size 2
@@ -25,8 +26,6 @@ void generatePairs(double *recordlist, double *pairlist, int record_count, int r
             for(l = j+1; l < record_size; l++){
 
                 int record_indices[2] = {j, l};
-
-                //printf("Record %d Pair %d : %.2f %.2f\n", i, pair_index, recordlist[record_indices[0]], recordlist[record_indices[1]]);
 
                 savePair(pairlist, recordlist, record_count, i, record_indices, pair_count, pair_index, pair_size);
                 
@@ -77,49 +76,23 @@ void locatePatterns(double *pairlist, double *output_buffer, int *occurance_list
 
                 comparePairs(pairlist, pair_count, curr_record1, curr_record2, curr_pair, pair_size, &isequal);
 
-                printf("Comparing pair %d on records %d, %d \n", curr_pair, curr_record1, curr_record2);
-
-                printPair_full(pairlist, pair_count, curr_record1, curr_pair, pair_size);
-                printPair_full(pairlist, pair_count, curr_record2, curr_pair, pair_size);
-
                 //if we found matching pair, copy this pair to the output buffer at corresponding index for current record
                 if(isequal){
-
-                    printf("MATCH\n");
-
-                    /*
-                    printPair_full(pairlist, pair_count, curr_record1, curr_pair, pair_size);
-                    printPair_full(pairlist, pair_count, curr_record2, curr_pair, pair_size);
-                    printf("-------------------\n");
-                    */
-
+ 
                     copyPair(pairlist, output_buffer, record_count, curr_record1, curr_pair, pair_size);
-
-                    /*
-                    printPair_full(pairlist, pair_count, curr_record1, curr_pair, pair_size);
-                    printPair_full(output_buffer, pair_count, curr_record1, curr_pair, pair_size);
-                    printf("-------------------\n");
-                    */
 
                     matches++;
 
                 }
                 
-
-                printf("-------\n");
-
-                sleep(1);
-
                 comps++;
-
-                //printf("%d\n", isequal);
 
             }
         }
 
     }
 
-    printf("comps: %d, matches: %d", comps, matches);
+    printf("comps: %d, matches: %d\n", comps, matches);
 
 }
 /*
@@ -144,7 +117,7 @@ int main(int argc, char **argv){
     */
 
     double *recordlist;
-    int record_count = 2;//M.rows;
+    int record_count = M.rows;
     int record_size = M.cols;
 
     recordlist_init(&recordlist, record_count, record_size);
@@ -178,7 +151,7 @@ int main(int argc, char **argv){
     //list of occurances of each substructure, indices align to parentlist
     int *occurancelist;
     occuranceList_init(&occurancelist, record_count, record_size, 1);
-    
+
     /*
     run compression phase 1
     */
@@ -187,8 +160,6 @@ int main(int argc, char **argv){
 
     //printAllPairs_full(pairlist, pair_count, 0, pair_size);
     //printAllPairs_full(pairlist, pair_count, 1, pair_size);
-
-    return 0;
 
 /*
     int equal = 5;
@@ -200,7 +171,15 @@ int main(int argc, char **argv){
 
     printf("Record Count: %d, nk: %d\n", record_count, pair_count);
 
-    locatePatterns(pairlist, outputlist_buffer, occurancelist, record_count, pair_count);
+    initOutputBuffer(outputlist_buffer, record_count, pair_count, pair_size);
+
+    locatePatterns(pairlist, outputlist_buffer, occurancelist, 2, pair_count);
+
+    printf("-----\n");
+
+    printAllPairsFromBuffer_full(outputlist_buffer, 2, pair_count, 20, pair_size);
+
+    //printAllPairs_full(outputlist_buffer, pair_count, 0, pair_size);
 
     return 0;
 }
