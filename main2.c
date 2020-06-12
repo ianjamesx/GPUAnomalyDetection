@@ -14,7 +14,7 @@
 #define pair_size 2
 
 //__GLOBAL__
-void generatePairs(double *recordlist, double *pairlist, int record_count, int record_size){
+void generatePairs(double *recordlist, double *pairlist, int record_count, int record_size, int pair_count){
 
     int i, j, l;
     for(i = 0; i < record_count; i++){ //<-- stride here by unique id
@@ -26,9 +26,9 @@ void generatePairs(double *recordlist, double *pairlist, int record_count, int r
 
                 int record_indices[2] = {j, l};
 
-                printf("Pair %.2f %.2f\n", recordlist[record_indices[0]], recordlist[record_indices[1]]);
+                //printf("Record %d Pair %d : %.2f %.2f\n", i, pair_index, recordlist[record_indices[0]], recordlist[record_indices[1]]);
 
-                savePair(pairlist, recordlist, record_count, i, record_indices, pair_index, pair_size);
+                savePair(pairlist, recordlist, record_count, i, record_indices, pair_count, pair_index, pair_size);
                 
                 pair_index++;
             
@@ -45,11 +45,17 @@ keeping track of number of occurances for each
 
 also, replace the pattern in the pairlist with the index in parent list
 will have to use negative index
+
+total ops: Ck(R) * NK
+where NK = number of unique pairings per record (820), R = record count 
 */
-/*
+
 void locatePatterns(double *pairlist, double *output_buffer, int *occurance_list, int record_count, int pair_count){
 
     int i, j, l;
+
+    int comps = 0;
+    int matches = 0;
 
     //comparePairs(double *all_pairs, int record_count, int record_index_1, int record_index_2, int pair_index, int k, int *equal)
 
@@ -57,27 +63,66 @@ void locatePatterns(double *pairlist, double *output_buffer, int *occurance_list
 
         int curr_pair = l;
 
+        //generate range for this thread to cover
+
         for(i = 0; i < record_count; i++){
 
+            //index of the record to compare all others to
             int curr_record1 = i;
 
             for(j = i+1; j < record_count; j++){
 
                 int curr_record2 = j;
-
                 int isequal;
 
-                comparePairs(pairlist, record_count, curr_record1, curr_record2, curr_pair, pair_count, &isequal);
+                comparePairs(pairlist, pair_count, curr_record1, curr_record2, curr_pair, pair_size, &isequal);
 
-                printf("%d", isequal);
+                printf("Comparing pair %d on records %d, %d \n", curr_pair, curr_record1, curr_record2);
+
+                printPair_full(pairlist, pair_count, curr_record1, curr_pair, pair_size);
+                printPair_full(pairlist, pair_count, curr_record2, curr_pair, pair_size);
+
+                //if we found matching pair, copy this pair to the output buffer at corresponding index for current record
+                if(isequal){
+
+                    printf("MATCH\n");
+
+                    /*
+                    printPair_full(pairlist, pair_count, curr_record1, curr_pair, pair_size);
+                    printPair_full(pairlist, pair_count, curr_record2, curr_pair, pair_size);
+                    printf("-------------------\n");
+                    */
+
+                    copyPair(pairlist, output_buffer, record_count, curr_record1, curr_pair, pair_size);
+
+                    /*
+                    printPair_full(pairlist, pair_count, curr_record1, curr_pair, pair_size);
+                    printPair_full(output_buffer, pair_count, curr_record1, curr_pair, pair_size);
+                    printf("-------------------\n");
+                    */
+
+                    matches++;
+
+                }
+                
+
+                printf("-------\n");
+
+                sleep(1);
+
+                comps++;
+
+                //printf("%d\n", isequal);
 
             }
         }
 
     }
 
-}
+    printf("comps: %d, matches: %d", comps, matches);
 
+}
+/*
 void reducePatterns(double *parent_list, double *output_buffer){
 
 
@@ -99,7 +144,7 @@ int main(int argc, char **argv){
     */
 
     double *recordlist;
-    int record_count = M.rows;
+    int record_count = 2;//M.rows;
     int record_size = M.cols;
 
     recordlist_init(&recordlist, record_count, record_size);
@@ -112,9 +157,11 @@ int main(int argc, char **argv){
     generate pairs
     */
 
+    int pair_count = nk_count(record_size, pair_size);
+
     double *pairlist;
     pairList_init(&pairlist, record_count, record_size, pair_size);
-    generatePairs(recordlist, pairlist, 1, record_size);
+    generatePairs(recordlist, pairlist, record_count, record_size, pair_count);
 
     /*
     allocate parent list and output list
@@ -125,8 +172,8 @@ int main(int argc, char **argv){
     pairList_init(&parentlist, record_count, record_size, pair_size);
 
     //buffer used for holding found substructures before comparing to parentlist
-    double *parentlist_buffer;
-    pairList_init(&parentlist_buffer, record_count, record_size, pair_size);
+    double *outputlist_buffer;
+    pairList_init(&outputlist_buffer, record_count, record_size, pair_size);
 
     //list of occurances of each substructure, indices align to parentlist
     int *occurancelist;
@@ -136,22 +183,24 @@ int main(int argc, char **argv){
     run compression phase 1
     */
 
-    int nk = nk_count(record_size, pair_size);
+    printf("%d %d %d\n", record_count, pair_count, pair_size);;
 
-    printRecord_full(recordlist, record_count, record_size, 0);
-    printf("------\n");
-    
-    //printPair_full(pairlist, record_count, 1, 2, pair_size);
-    //printPair_full(pairlist, record_count, 2, 2, pair_size);
-    //printRecord_full(recordlist, record_count, record_size, 1);
+    //printAllPairs_full(pairlist, pair_count, 0, pair_size);
+    //printAllPairs_full(pairlist, pair_count, 1, pair_size);
 
-    //printAllPairs_full(pairlist, record_count, 0, nk, pair_size);
+    return 0;
 
+/*
     int equal = 5;
     printf("COMPARING record 1, record 2, pair 2\n");
-    comparePairs(pairlist, record_count, 1, 2, 2, pair_size, &equal);
-
+    comparePairs(pairlist, record_count, 1, 12, 31, pair_size, &equal);
     printf("\n equal is %d\n", equal);
+
+*/
+
+    printf("Record Count: %d, nk: %d\n", record_count, pair_count);
+
+    locatePatterns(pairlist, outputlist_buffer, occurancelist, record_count, pair_count);
 
     return 0;
 }
