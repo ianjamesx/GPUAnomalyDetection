@@ -2,15 +2,7 @@ void attributeindex_real(int r, int i, int j, int *index){
     *index = (i * r) + j;
 }
 
-void recordlist_init(double **all_records, int record_count, int record_size){
-    
-    //record_count  - number of records (rows)
-    //record_size   - number of attributes in a record (columns)
-    int size = (record_count * record_size) * sizeof(double);
-    *all_records = malloc(size);
-}
-
-void getRecord(double *all_records, int record_count, int record_size, int record_index, double **record){
+void getRecord(float *all_records, int record_count, int record_size, int record_index, float **record){
 
     //get start and end indices of record in list of all records
     int recordindex_start;
@@ -24,11 +16,11 @@ void getRecord(double *all_records, int record_count, int record_size, int recor
 
 }
 
-void saveRecord(double *all_records, int record_count, int record_size, int record_index, double *record){
+void saveRecord(float *all_records, int record_count, int record_size, int record_index, float *record){
 
     //get start and end indices of record in list of all records
     int recordindex_start;
-    attributeindex_real(record_index, record_count, 0, &recordindex_start);
+    attributeindex_real(record_index, record_size, 0, &recordindex_start);
 
     int i;
     for(i = 0; i < record_size; i++){
@@ -38,7 +30,7 @@ void saveRecord(double *all_records, int record_count, int record_size, int reco
 
 }
 
-void printRecord_full(double *all_records, int record_count, int record_size, int record_index){
+void printRecord_full(float *all_records, int record_count, int record_size, int record_index){
 
     //get start and end indices of record in list of all records
     int recordindex_start;
@@ -47,7 +39,7 @@ void printRecord_full(double *all_records, int record_count, int record_size, in
     int i;
     for(i = 0; i < record_size; i++){
         int attributeindex = recordindex_start + i;
-        printf("%.2f\n", all_records[attributeindex]);
+        cout << all_records[attributeindex] << endl;
     }
 
 }
