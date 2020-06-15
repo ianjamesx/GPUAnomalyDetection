@@ -22,13 +22,13 @@ void percentread(int curr, int total, string message){
 /*
 read in full dataset (or file of features), path passed by user
 */
-vector<vector<string>> readfile(string path){
+vector<vector<string> > readfile(string path){
 
     string line;
     ifstream infile;
     infile.open(path);
 
-    vector<vector<string>> records;
+    vector<vector<string> > records;
     int curr = 0;
 
     while (getline(infile, line)){
@@ -65,8 +65,8 @@ float getPropertyIndex(string property, vector<string> &v){
 /*
 conver 2d vector to 1d array of floats
 */
-void generateNumericRecords(vector<vector<string>> rvect, float *records, int *types){
-    
+void generateNumericRecords(vector<vector<string> > rvect, float *records, int *types){
+
     int i, j;
 
     //vectors to keep track of language-based properties;
@@ -114,7 +114,7 @@ void generateNumericRecords(vector<vector<string>> rvect, float *records, int *t
 void init_dataset(int &record_count, int &record_size, float *&records, int *&types){
 
     int exact;
-    vector<vector<string>> record_tokens = readfile("./dataset/sample.data");
+    vector<vector<string> > record_tokens = readfile("./dataset/sample.data");
 
     //allocate space for number of records * number of attributes per record (e.g 500k * 42)
     record_count = record_tokens.size();
