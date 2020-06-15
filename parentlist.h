@@ -1,13 +1,13 @@
 /*
 print every pattern found and stored in an output buffer
 */
-void printAllPairsFromBuffer_full(double *output_buffer, int record_count, int pair_count, int pair_index, int pair_size){
+void printAllPairsFromBuffer_full(float *output_buffer, int record_count, int pair_count, int pair_index, int pair_size){
 
     int i, j;
     for(i = 0; i < record_count; i++){
 
         int pairindex_start;
-        getPairIndex_real(pair_count, i, pair_index, pair_size, &pairindex_start);
+        getPairIndex_real(pair_count, i, pair_index, pair_size, pairindex_start);
 
         for(j= 0; j < pair_size; j++){
 
@@ -29,7 +29,7 @@ void printAllPairsFromBuffer_full(double *output_buffer, int record_count, int p
 /*
 initialize output buffer to all -1, signaling no pattern stored as of yet
 */
-void initOutputBuffer(double *output_buffer, int record_count, int pair_count, int pair_size){
+void initOutputBuffer(float *output_buffer, int record_count, int pair_count, int pair_size){
 
     int bufferlen = (pair_size * pair_count) * record_count;
     int i;
