@@ -22,19 +22,34 @@ void generatePairs(float *recordlist, float *pairlist, int record_count, int rec
 }
 
 /*
+copy all pairs from the pairlist to the output buffer
+so when we start replacing with -1s we dont ruin our original pairs
+*/
+void copyPairsToBuffer(float *pair_list, float *pair_buffer, int record_count, int pair_count, int pair_size){
+
+    int i, j;
+
+    for(j = 0; j < pair_count; j++){ //<-- stride here (by blocks)
+
+        for(i = 0; i < record_count; i++){
+            copyPair(pair_list, pair_buffer, pair_count, i, j, pair_size);
+        }
+
+    }
+
+}
+
+/*
 distribute a unique pairing to each thread-block
 thread block will find all patterns in pairings and move to the output buffer
 then threads will search output buffer for duplicates, and merge into list of unique patterns
 keeping track of number of occurances for each
 
-also, replace the pattern in the pairlist with the index in parent list
-will have to use negative index
-
 total ops: Ck(R) * NK
 where NK = number of unique pairings per record (820), R = record count 
 */
 
-void locatePatterns(float *pairlist, float *output_buffer, int *occurance_list, int record_count, int pair_count, int pair_size){
+void locatePatterns(float *pair_buffer, int *occurance_list, int record_count, int pair_count, int pair_size){
 
     int i, j, l;
 
@@ -47,33 +62,59 @@ void locatePatterns(float *pairlist, float *output_buffer, int *occurance_list, 
 
             //index of the record to compare all others to
             int curr_record1 = i;
+
+            //first check if current pair has been removed, if it has, skip this iter
+            int removed;
+            pairRemoved(pair_buffer, pair_count, curr_record1, curr_pair, pair_size, removed);
+            if(removed) continue;
+
             //number of occurances of this pattern in other records
-            int occurances = 0;
+            //default is one as pattern appearing in this record counts as an occurance
+            int occurances = 1;
 
             for(j = i+1; j < record_count; j++){
 
                 int curr_record2 = j;
                 int isequal;
-                comparePairs(pairlist, pair_count, curr_record1, curr_record2, curr_pair, pair_size, isequal);
+                comparePairs(pair_buffer, pair_count, curr_record1, curr_record2, curr_pair, pair_size, isequal);
 
-                //if we found matching pair, copy this pair to the output buffer at corresponding index for current record
+                //if we found matching pair, remove the pair from the buffer so we dont count it multiple times in compression
                 if(isequal){
                     //cout << "match on patterm " << curr_pair << " for record " << curr_record1 << ", " << curr_record2 << endl;
-                    copyPair(pairlist, output_buffer, record_count, curr_record1, curr_pair, pair_size);
+                    removeBufferPair(pair_buffer, pair_count, curr_record2, curr_pair, pair_size);
                     occurances++;
                 }
             }
+
             //add number of occurances of this pattern to list
             addOccurances(occurance_list, pair_count, curr_record1, curr_pair, occurances);
+            
         }
 
     }
 
 }
 
-/*
-void reducePatterns(float *parent_list, double *output_buffer){
 
+void reducePatterns(float *pairlist, float *output_buffer, int *occurance_list, int record_count, int pair_count, int pair_size){
+
+    int i, j, l;
+
+    for(l = 0; l < pair_count; l++){ //<-- stride here (by blocks)
+
+        int curr_pair = l;
+
+        for(i = 0; i < record_count; i++){
+
+            //get number of occurances for this record
+            int occuranceindex_real;
+            getOccuranceIndex_real(pair_count, j, i, occuranceindex_real);
+
+            if(occurance_list[i]){
+
+            }
+        }
+
+    }
 
 }
-*/

@@ -1,3 +1,3 @@
 #!/bin/bash
-gcc -c main.c
-gcc -o main main.o
+g++ -c main.cpp
+g++ -o main main.o

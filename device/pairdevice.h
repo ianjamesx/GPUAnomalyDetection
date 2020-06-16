@@ -139,20 +139,10 @@ void addOccurances(int *occurance_list, int pair_count, int record_index, int pa
     int occuranceindex_real;
     getOccuranceIndex_real(pair_count, record_index, pair_index, occuranceindex_real);
     occurance_list[occuranceindex_real] += occurances;
-    
+
 }
 
 void printOccurances(int *occurance_list, int record_count, int pair_count){
-/*
-    int occlen = pair_count * record_count;
-    int i;
-
-    for(i = 0; i < occlen; i++){
-        if(occurance_list[i] > 0){
-            printf("Pair %d\n", occurance_list[i]);
-        }
-    }
-*/
 
     int i, j;
     for(i = 0; i < pair_count; i++){
@@ -216,6 +206,44 @@ void comparePairs(float *all_pairs, int pair_count, int record_index_1, int reco
             //break;
         }
 
+    }
+
+}
+
+/*
+when we want to remove a pair from the buffer, we replace all parts of the pair with -1s
+purpose of removing pairs: to ensure that we dont double count pairs during location phase
+*/
+void removeBufferPair(float *all_pairs, int pair_count, int record_index, int pair_index, int k){
+
+    int pairindex_start;
+    getPairIndex_real(pair_count, record_index, pair_index, k, pairindex_start);
+
+    int i;
+    for(i = 0; i < k; i++){
+        int all_pair_index = (pairindex_start + i);
+        all_pairs[all_pair_index] = -1.0;
+    }
+
+}
+
+/*
+check if a pair has been removed (any part of the pair is -1.0)
+*/
+void pairRemoved(float *all_pairs, int pair_count, int record_index, int pair_index, int k, int &removed){
+
+    int pairindex_start;
+    getPairIndex_real(pair_count, record_index, pair_index, k, pairindex_start);
+
+    removed = 0;
+
+    int i;
+    for(i = 0; i < k; i++){
+        int all_pair_index = (pairindex_start + i);
+
+        if(all_pairs[all_pair_index] == -1.0){
+            removed = 1;
+        }
     }
 
 }
