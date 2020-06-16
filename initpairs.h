@@ -32,6 +32,12 @@ void occuranceList_init(int *&occurance_list, int record_count, int record_attri
 
     int size = (nk * record_count);
     occurance_list = new int[size];
+
+    //initialize all occurances to 0
+    int i;
+    for(i = 0; i < size; i++){
+        occurance_list[i] = 0;
+    }
 }
 
 

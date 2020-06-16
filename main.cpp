@@ -39,11 +39,9 @@ int main(){
 
     int pair_size = 2;
 
-    int i;
+    int i, j;
 
     int pair_count = nk_count(record_size, pair_size);
-
-    cout << pair_count << " " << record_size << " " << pair_size << endl;
 
     float *pairs;
     pairList_init(pairs, record_count, record_size, pair_size);
@@ -54,12 +52,7 @@ int main(){
 
     generatePairs(records, pairs, record_count, record_size, pair_count, pair_size);
 
-    printAllPairs_full(pairs, pair_count, 0, pair_size);
-
-    cout << "----------------\n";
-
-    printAllPairs_full(pairs, pair_count, 1, pair_size);
-
+    //printAllPairs_full(pairs, pair_count, 0, pair_size);
 
     /*
     allocate parent list and output list
@@ -83,15 +76,9 @@ int main(){
 
     initOutputBuffer(outputlist_buffer, record_count, pair_count, pair_size);
 
-   // locatePatterns(pairs, outputlist_buffer, occurancelist, record_count, pair_count, pair_size);
+    locatePatterns(pairs, outputlist_buffer, occurancelist, record_count, pair_count, pair_size);
 
-    printf("-----\n");
-
-    //printAllPairsFromBuffer_full(outputlist_buffer, record_count, pair_count, 0, pair_size);
-
-    printf("-----\n");
-
-    //printOccurances(occurancelist, record_count, pair_count);
+    printOccurances(occurancelist, record_count, pair_count);
 
 
     return 0;

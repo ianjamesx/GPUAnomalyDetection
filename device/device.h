@@ -12,7 +12,7 @@ void generatePairs(float *recordlist, float *pairlist, int record_count, int rec
 
                 int record_indices[2] = {j, l};
 
-                savePair(pairlist, recordlist, record_count, i, record_indices, pair_count, pair_index, pair_size);
+                savePair(pairlist, recordlist, record_size, i, record_indices, pair_count, pair_index, pair_size);
                 
                 pair_index++;
             
@@ -38,22 +38,15 @@ void locatePatterns(float *pairlist, float *output_buffer, int *occurance_list, 
 
     int i, j, l;
 
-    int comps = 0;
-    int matches = 0;
-
-    //comparePairs(double *all_pairs, int record_count, int record_index_1, int record_index_2, int pair_index, int k, int *equal)
-
     for(l = 0; l < pair_count; l++){ //<-- stride here (by blocks)
 
         int curr_pair = l;
 
         //generate range for this thread to cover
-
         for(i = 0; i < record_count; i++){
 
             //index of the record to compare all others to
             int curr_record1 = i;
-
             //number of occurances of this pattern in other records
             int occurances = 0;
 
@@ -61,39 +54,26 @@ void locatePatterns(float *pairlist, float *output_buffer, int *occurance_list, 
 
                 int curr_record2 = j;
                 int isequal;
-
                 comparePairs(pairlist, pair_count, curr_record1, curr_record2, curr_pair, pair_size, isequal);
 
                 //if we found matching pair, copy this pair to the output buffer at corresponding index for current record
                 if(isequal){
- 
+                    //cout << "match on patterm " << curr_pair << " for record " << curr_record1 << ", " << curr_record2 << endl;
                     copyPair(pairlist, output_buffer, record_count, curr_record1, curr_pair, pair_size);
-
                     occurances++;
-
-                    matches++;
-
                 }
-                
-                comps++;
-
             }
-
-            if(curr_pair == 711){
-                printf("~~\n");
-                printPair_full(pairlist, pair_count, curr_record1, curr_pair, pair_size);
-            }
-            
-
-            addOccurances(occurance_list, record_count, curr_record1, curr_pair, occurances);
-
+            //add number of occurances of this pattern to list
+            addOccurances(occurance_list, pair_count, curr_record1, curr_pair, occurances);
         }
 
     }
 
 }
+
 /*
-void reducePatterns(double *parent_list, double *output_buffer){
+void reducePatterns(float *parent_list, double *output_buffer){
 
 
-}*/
+}
+*/
