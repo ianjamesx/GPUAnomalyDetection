@@ -60,6 +60,10 @@ int main(){
     pairList_init(pair_buffer, record_count, record_size, pair_size);
 
     //list of occurances of each substructure, indices align to parentlist
+    int *occurance_list;
+    occuranceList_init(occurance_list, record_count, record_size, pair_size);
+
+    //also maintain a buffer for each iteration of occurances before copying to parentlist
     int *occurance_buffer;
     occuranceList_init(occurance_buffer, record_count, record_size, pair_size);
 
@@ -76,7 +80,6 @@ int main(){
     //printOccurances(occurance_buffer, record_count, pair_count);
 
     cout << "----\n";
-
 
     printAllPairsAllIndices_full(pair_buffer, record_count, pair_count, pair_size);
 

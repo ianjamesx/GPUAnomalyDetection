@@ -1,10 +1,10 @@
 
 /*
 get starting index of a pair based off
-    row - number of rows (corresponds to number of records)
-    k   - number of elements per pairing
-    i   - index of row
-    j   - index of pair
+    nk  - all pairs (820)
+    i   - record index
+    j   - pair index
+    k   - pair size
 
     CURRENT STATUS: MIGHT WORK
 */
@@ -83,7 +83,7 @@ void printAllPairs_full_nobreaks(float *all_pairs, int pair_count, int record_in
 save pair of attributes from a record index to its corresponding pair index
 */
 void savePair(float *all_pairs, float *recordlist, int record_size, int record_index, int record_attribute_indices[], int pair_count, int pair_index, int k){
-    
+
     //get starting index of pair for all_pairs array
     int pairindex_start;
     getPairIndex_real(pair_count, record_index, pair_index, k, pairindex_start);
@@ -245,23 +245,26 @@ void pairRemoved(float *all_pairs, int pair_count, int record_index, int pair_in
             removed = 1;
         }
     }
-
 }
 
-void pairInParentList(float *all_pairs, double *parent_list, int record_count, int record_index, int pair_index, int k, int &parent_index){
+/*
+see if a pair is in parent list by iterating over each pair in parent list and comparing
+if so, save parent index, if not parent index will be -1
+*/
+void pairInParentList(float *all_pairs, float *parent_list, int record_count, int record_index, int pair_count, int pair_index, int k, int &parent_index){
 
     parent_index = -1;
 
     //get starting index of pair to search for
     int pair_index_real;
-    getPairIndex_real(record_count, record_index, pair_index, k, pair_index);
+    getPairIndex_real(pair_count, record_index, pair_index, k, pair_index);
 
     int i, j;
 
     for(i = 0; i < record_count; i++){
 
         int parent_index_curr;
-        getPairIndex_real(record_count, i, pair_index_real, k, parent_index_curr);
+        getPairIndex_real(pair_count, i, pair_index, k, parent_index_curr);
 
         int match = 1;
 
@@ -279,13 +282,62 @@ void pairInParentList(float *all_pairs, double *parent_list, int record_count, i
 
         }
 
-        //if we have a match, set return index to index found in parent list
+        //if we have a match, set to index found in parent list
+        //return early so we dont have any false negatives
         if(match){
             parent_index = i;
+            return;
         }
 
     }
 
 }
 
-//void savePairToParentList()
+void getNextParentIndex(float *parent_list, int record_count, int record_index, int pair_count, int pair_index, int k, int &next_index){
+
+  int i;
+
+  for(i = 0; i < record_count; i++){
+
+      int parent_index_curr;
+      getPairIndex_real(pair_count, i, pair_index, k, parent_index_curr);
+
+      //index containing -1 signifies open space
+      //keep this as next space and return
+      if(parent_list[parent_index_curr] == -1.0){
+        next_index = i;
+        return;
+      }
+
+  }
+
+}
+
+/*
+save pair to parent list
+if pair is in parent list, do not save to parent list
+if not, put at end
+save index of pair in parent list regardless
+*/
+void savePairToParentList(float *pair_buffer, float *parent_list, int record_count, int record_index, int pair_count, int pair_index, int k, int &parent_index){
+
+  pairInParentList(pair_buffer, parent_list, record_count, record_index, pair_count, pair_index, k, parent_index);
+
+  //pair not in parent list, get next available space to save it in
+  if(parent_index == -1){
+    getNextParentIndex(parent_list, record_count, record_index, pair_count, pair_index, k, parent_index);
+
+    //copy pair to next spot (cannot used copyPair(...) as indices for pair indexing will not be same in both buffer and parent list)
+    int startindex_buffer, startindex_parent;
+    getPairIndex_real(pair_count, record_index, pair_index, k, startindex_buffer);
+    getPairIndex_real(pair_count, parent_index, pair_index, k, startindex_parent);
+    int i;
+    for(i = 0; i < k; i++){
+        int curr_index_buffer = (startindex_buffer + i);
+        int curr_index_parent = (startindex_parent + i);
+        parent_list[curr_index_parent] = pair_buffer[curr_index_buffer];
+    }
+
+  }
+
+}

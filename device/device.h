@@ -13,9 +13,9 @@ void generatePairs(float *recordlist, float *pairlist, int record_count, int rec
                 int record_indices[2] = {j, l};
 
                 savePair(pairlist, recordlist, record_size, i, record_indices, pair_count, pair_index, pair_size);
-                
+
                 pair_index++;
-            
+
             }
         }
     }
@@ -46,7 +46,7 @@ then threads will search output buffer for duplicates, and merge into list of un
 keeping track of number of occurances for each
 
 total ops: Ck(R) * NK
-where NK = number of unique pairings per record (820), R = record count 
+where NK = number of unique pairings per record (820), R = record count
 */
 
 void locatePatterns(float *pair_buffer, int *occurance_list, int record_count, int pair_count, int pair_size){
@@ -63,7 +63,7 @@ void locatePatterns(float *pair_buffer, int *occurance_list, int record_count, i
             //index of the record to compare all others to
             int curr_record1 = i;
 
-            //first check if current pair has been removed, if it has, skip this iter
+            //first check if current pair has been removed, if it has, skip this pair
             int removed;
             pairRemoved(pair_buffer, pair_count, curr_record1, curr_pair, pair_size, removed);
             if(removed) continue;
@@ -88,13 +88,12 @@ void locatePatterns(float *pair_buffer, int *occurance_list, int record_count, i
 
             //add number of occurances of this pattern to list
             addOccurances(occurance_list, pair_count, curr_record1, curr_pair, occurances);
-            
+
         }
 
     }
 
 }
-
 
 void reducePatterns(float *pairlist, float *output_buffer, int *occurance_list, int record_count, int pair_count, int pair_size){
 
@@ -114,7 +113,25 @@ void reducePatterns(float *pairlist, float *output_buffer, int *occurance_list, 
 
             }
         }
-
     }
+}
 
+void addToParentList(float *pairlist, float *output_buffer, float *parent_list, int *occurance_list, int record_count, int pair_count, int pair_size){
+
+  int i, j, l;
+  for(l = 0; l < pair_count; l++){
+    int curr_pair = l;
+
+    for(i = 0; i < record_count; i++){
+      int curr_record = i;
+
+      //before copying a pair over, first make sure it has not been removed
+      int removed;
+      pairRemoved(output_buffer, pair_count, curr_record, curr_pair, pair_size, removed);
+
+      if(!removed){
+        copyPair(output_buffer, parent_list, pair_count, curr_record, curr_pair, pair_size);
+      }
+    }
+  }
 }
