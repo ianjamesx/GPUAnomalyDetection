@@ -40,28 +40,6 @@ void generatePairs(float *recordlist, float *pairlist, int record_count, int rec
 }
 
 /*
-copy all pairs from the pairlist to the output buffer
-so when we start replacing with -1s we dont ruin our original pairs
-*/
-
-/*
-__global__
-void copyPairsToBuffer(float *pair_list, float *pair_buffer, int record_count, int pair_count, int pair_size){
-
-    int i, j;
-
-    for(j = 0; j < pair_count; j++){ //<-- stride here (by blocks)
-
-        for(i = 0; i < record_count; i++){
-            copypair_device(pair_list, pair_buffer, pair_count, i, j, pair_size);
-        }
-
-    }
-
-}
-*/
-
-/*
 distribute a unique pairing to each thread-block
 thread block will find all patterns in pairings and move to the output buffer
 then threads will search output buffer for duplicates, and merge into list of unique patterns
@@ -70,13 +48,18 @@ keeping track of number of occurances for each
 total ops: Ck(R) * NK
 where NK = number of unique pairings per record (820), R = record count
 */
-/*
+
 __global__
 void locatePatterns(float *pair_buffer, int *occurance_list, int record_count, int pair_count, int pair_size){
 
     int i, j, l;
 
-    for(l = 0; l < pair_count; l++){ //<-- stride here (by blocks)
+    int index, stride;
+    getIndex(blockIdx.x, blockDim.x, threadIdx.x, index);
+    getStride(blockDim.x, gridDim.x, stride);
+
+    //for(l = 0; l < pair_count; l++){ //<-- stride here (by blocks)
+    for(l = index; l < pair_count; l += stride){ 
 
         int curr_pair = l;
 
@@ -117,7 +100,7 @@ void locatePatterns(float *pair_buffer, int *occurance_list, int record_count, i
     }
 
 }
-*
+/*
 __global__
 void reducePatterns(float *pairlist, float *output_buffer, int *occurance_list, int record_count, int pair_count, int pair_size){
 

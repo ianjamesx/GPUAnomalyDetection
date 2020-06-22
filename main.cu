@@ -86,7 +86,7 @@ int main(){
 
     //print all pairings
     for(i = 0; i < record_count; i++){
-        printAllPairs_host(pairs, pair_count, i, pair_size);
+       // printAllPairs_host(pairs, pair_count, i, pair_size);
     }
 
     /*
@@ -121,7 +121,7 @@ int main(){
     copyPairsToBuffer_host(pairs, pair_buffer, record_count, pair_count, pair_size);
 
     for(i = 0; i < record_count; i++){
-        printAllPairs_host(pair_buffer, pair_count, i, pair_size);
+        //printAllPairs_host(pair_buffer, pair_count, i, pair_size);
     }
 
 
