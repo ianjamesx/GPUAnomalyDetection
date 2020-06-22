@@ -1,9 +1,25 @@
+__device__
+void getIndex(int blockIdx, int blockDim, int threadIdx, int &index){
+    index = blockIdx * blockDim + threadIdx;
+}
 
-//__GLOBAL__
+__device__
+void getStride(int blockDimx, int gridDimx, int &stride){
+    stride = blockDimx * gridDimx;
+}
+
+__global__
 void generatePairs(float *recordlist, float *pairlist, int record_count, int record_size, int pair_count, int pair_size){
 
     int i, j, l;
-    for(i = 0; i < record_count; i++){ //<-- stride here by unique id
+
+    int index, stride;
+    getIndex(blockIdx.x, blockDim.x, threadIdx.x, index);
+    getStride(blockDim.x, gridDim.x, stride);
+
+    printf("Hello! From index %d, my stride: %d (%d, %d)\n", index, stride, record_size, record_count);
+
+    for(i = index; i < record_count; i += stride){ //<-- stride here by index
 
         int pair_index = 0;
 
@@ -12,7 +28,9 @@ void generatePairs(float *recordlist, float *pairlist, int record_count, int rec
 
                 int record_indices[2] = {j, l};
 
-                savePair(pairlist, recordlist, record_size, i, record_indices, pair_count, pair_index, pair_size);
+                //printf("thread %d iter %d --> %d, %d\n", index, i, record_indices[0], record_indices[1]);
+
+                savepair_device(pairlist, recordlist, record_size, i, record_indices, pair_count, pair_index, pair_size);
 
                 pair_index++;
 
@@ -25,6 +43,9 @@ void generatePairs(float *recordlist, float *pairlist, int record_count, int rec
 copy all pairs from the pairlist to the output buffer
 so when we start replacing with -1s we dont ruin our original pairs
 */
+
+/*
+__global__
 void copyPairsToBuffer(float *pair_list, float *pair_buffer, int record_count, int pair_count, int pair_size){
 
     int i, j;
@@ -32,12 +53,13 @@ void copyPairsToBuffer(float *pair_list, float *pair_buffer, int record_count, i
     for(j = 0; j < pair_count; j++){ //<-- stride here (by blocks)
 
         for(i = 0; i < record_count; i++){
-            copyPair(pair_list, pair_buffer, pair_count, i, j, pair_size);
+            copypair_device(pair_list, pair_buffer, pair_count, i, j, pair_size);
         }
 
     }
 
 }
+*/
 
 /*
 distribute a unique pairing to each thread-block
@@ -48,7 +70,8 @@ keeping track of number of occurances for each
 total ops: Ck(R) * NK
 where NK = number of unique pairings per record (820), R = record count
 */
-
+/*
+__global__
 void locatePatterns(float *pair_buffer, int *occurance_list, int record_count, int pair_count, int pair_size){
 
     int i, j, l;
@@ -94,7 +117,8 @@ void locatePatterns(float *pair_buffer, int *occurance_list, int record_count, i
     }
 
 }
-
+*
+__global__
 void reducePatterns(float *pairlist, float *output_buffer, int *occurance_list, int record_count, int pair_count, int pair_size){
 
     int i, j, l;
@@ -135,3 +159,4 @@ void addToParentList(float *pairlist, float *output_buffer, float *parent_list, 
     }
   }
 }
+*/

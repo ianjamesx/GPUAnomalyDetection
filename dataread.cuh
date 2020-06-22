@@ -8,6 +8,34 @@ void err(string message){
 }
 
 /*
+some string utils
+*/
+
+void cleanString(string str){
+
+  str.erase(remove(str.begin(), str.end(), '\n'), str.end());
+  str.erase(remove(str.begin(), str.end(), '.'), str.end());
+  str.erase(remove(str.begin(), str.end(), ' '), str.end());
+
+}
+
+void splitString(string str, char delim, vector<string> &result){
+
+  stringstream s_stream(str); //create string stream from the string
+
+  while(s_stream.good()) {
+    string substr;
+    getline(s_stream, substr, delim); //get first string delimited by comma
+    result.push_back(substr);
+  }
+
+  for(int i = 0; i < result.size(); i++) {    //print all splitted strings
+    cleanString(result.at(i));
+  }
+
+}
+
+/*
 display percentage based on amount done and total
 */
 void percentread(int curr, int total, string message){
@@ -114,14 +142,16 @@ void generateNumericRecords(vector<vector<string> > rvect, float *records, int *
 void init_dataset(int &record_count, int &record_size, float *&records, int *&types){
 
     int exact;
-    vector<vector<string> > record_tokens = readfile("./dataset/sample.data");
+    //vector<vector<string> > record_tokens = readfile("./dataset/sample.data");
+    vector<vector<string> > record_tokens = readfile("./dataset/simple.data");
 
     //allocate space for number of records * number of attributes per record (e.g 500k * 42)
     record_count = record_tokens.size();
     record_size = record_tokens[0].size()-1;
 
-    records = new float[record_count * record_size];
-    types = new int[record_count];
+    //allocate for host and device
+    gpuErrchk( cudaMallocManaged(&records, (record_count * record_size) * sizeof(float)) );
+    gpuErrchk( cudaMallocManaged(&types, record_count * sizeof(int)) );
 
     generateNumericRecords(record_tokens, records, types);
 

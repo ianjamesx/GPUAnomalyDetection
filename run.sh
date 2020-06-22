@@ -1,3 +1,3 @@
 #!/bin/bash
-g++ -c main.cpp
-g++ -o main main.o
+nvcc main.cu
+./a.out

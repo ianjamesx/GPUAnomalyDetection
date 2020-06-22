@@ -8,18 +8,22 @@ get starting index of a pair based off
 
     CURRENT STATUS: MIGHT WORK
 */
+__device__
 void getPairIndex_real(int nk, int i, int j, int k, int &index){
     index = (j * k) + (nk * k * i);
 }
 
+__device__
 void getRecordAttributeIndex_real(int c, int i, int j, int &index){
     index = (i * c) + j;
 }
 
+__device__
 void getOccuranceIndex_real(int c, int i, int j, int &index){
     index = (i * c) + j;
 }
 
+__device__
 void printPair_full(float *all_pairs, int pair_count, int record_index, int pair_index, int pair_size){
 
     int pairindex_start;
@@ -35,6 +39,7 @@ void printPair_full(float *all_pairs, int pair_count, int record_index, int pair
 
 }
 
+__device__
 void printAllPairs_full(float *all_pairs, int pair_count, int record_index, int pair_size){
 
     int i, j;
@@ -57,7 +62,7 @@ void printAllPairs_full(float *all_pairs, int pair_count, int record_index, int 
     }
 
 }
-
+/*
 void printAllPairs_full_nobreaks(float *all_pairs, int pair_count, int record_index, int pair_size){
 
     int i, j;
@@ -78,48 +83,37 @@ void printAllPairs_full_nobreaks(float *all_pairs, int pair_count, int record_in
     printf("\n");
 
 }
-
+*/
 /*
 save pair of attributes from a record index to its corresponding pair index
 */
-void savePair(float *all_pairs, float *recordlist, int record_size, int record_index, int record_attribute_indices[], int pair_count, int pair_index, int k){
+__device__
+void savepair_device(float *all_pairs, float *recordlist, int record_size, int record_index, int record_attribute_indices[], int pair_count, int pair_index, int k){
 
     //get starting index of pair for all_pairs array
     int pairindex_start;
     getPairIndex_real(pair_count, record_index, pair_index, k, pairindex_start);
 
-    //copy elements corresponding to record attributes from record_indices to pair
+    //printf("Saving %d Elements %d - %d ... %d\n", record_index, record_attribute_indices[0], record_attribute_indices[1], pairindex_start);
     int i;
-
-    //printf("%d, %d ", record_index, pair_index);
-    //printf("(%d): ", pairindex_start);
-
-    //cout << "Saving " << record_index << " Elements " << record_attribute_indices[0] << " - " << record_attribute_indices[1] << "... " << pairindex_start<< endl;
     for(i = 0; i < k; i++){
 
         //get indices for list of pairs, and list of record indices to copy over
         int all_pair_index = (pairindex_start + i);
 
-        int record_attribute_index;// = (record_count * record_index) + record_indices[i];
+        int record_attribute_index;
         getRecordAttributeIndex_real(record_size, record_index, record_attribute_indices[i], record_attribute_index);
-
-        //cout << recordlist[record_attribute_index] << " ";
-
-        //printf("%.2f, ", recordlist[record_attribute_index]);
 
         all_pairs[all_pair_index] = recordlist[record_attribute_index];
     }
-
-    //cout << "\n";
-
-    //printf("\n");
 
 }
 
 /*
 copy a pair from a src array (e.g. initial pair list) to a destination (e.g. parent list)
 */
-void copyPair(float *src, float *dest, int pair_count, int record_index, int pair_index, int k){
+__device__
+void copypair_device(float *src, float *dest, int pair_count, int record_index, int pair_index, int k){
 
     int pairindex_real;
     getPairIndex_real(pair_count, record_index, pair_index, k, pairindex_real);
@@ -134,6 +128,7 @@ void copyPair(float *src, float *dest, int pair_count, int record_index, int pai
 /*
 increment occurances in occurance array
 */
+__device__
 void addOccurances(int *occurance_list, int pair_count, int record_index, int pair_index, int occurances){
 
     int occuranceindex_real;
@@ -142,6 +137,7 @@ void addOccurances(int *occurance_list, int pair_count, int record_index, int pa
 
 }
 
+__device__
 void printOccurances(int *occurance_list, int record_count, int pair_count){
 
     int i, j;
@@ -167,6 +163,7 @@ void printOccurances(int *occurance_list, int record_count, int pair_count){
 /*
 retrieve a pair of attributes from list of all pairs
 */
+__device__
 void getPair(float *all_pairs, int pair_count, int record_index, int pair_index, int k, float *pair){
 
     int pairindex_start;
@@ -184,6 +181,7 @@ void getPair(float *all_pairs, int pair_count, int record_index, int pair_index,
 sets equal to 1 if pairs are equal
 sets equal to 0 if pairs are not equal
 */
+__device__
 void comparePairs(float *all_pairs, int pair_count, int record_index_1, int record_index_2, int pair_index, int k, int &equal){
 
     equal = 1;
@@ -214,6 +212,7 @@ void comparePairs(float *all_pairs, int pair_count, int record_index_1, int reco
 when we want to remove a pair from the buffer, we replace all parts of the pair with -1s
 purpose of removing pairs: to ensure that we dont double count pairs during location phase
 */
+__device__
 void removeBufferPair(float *all_pairs, int pair_count, int record_index, int pair_index, int k){
 
     int pairindex_start;
@@ -230,6 +229,7 @@ void removeBufferPair(float *all_pairs, int pair_count, int record_index, int pa
 /*
 check if a pair has been removed (any part of the pair is -1.0)
 */
+__device__
 void pairRemoved(float *all_pairs, int pair_count, int record_index, int pair_index, int k, int &removed){
 
     int pairindex_start;
@@ -251,6 +251,7 @@ void pairRemoved(float *all_pairs, int pair_count, int record_index, int pair_in
 see if a pair is in parent list by iterating over each pair in parent list and comparing
 if so, save parent index, if not parent index will be -1
 */
+__device__
 void pairInParentList(float *all_pairs, float *parent_list, int record_count, int record_index, int pair_count, int pair_index, int k, int &parent_index){
 
     parent_index = -1;
@@ -293,6 +294,7 @@ void pairInParentList(float *all_pairs, float *parent_list, int record_count, in
 
 }
 
+__device__
 void getNextParentIndex(float *parent_list, int record_count, int record_index, int pair_count, int pair_index, int k, int &next_index){
 
   int i;
@@ -319,6 +321,7 @@ if pair is in parent list, do not save to parent list
 if not, put at end
 save index of pair in parent list regardless
 */
+__device__
 void savePairToParentList(float *pair_buffer, float *parent_list, int record_count, int record_index, int pair_count, int pair_index, int k, int &parent_index){
 
   pairInParentList(pair_buffer, parent_list, record_count, record_index, pair_count, pair_index, k, parent_index);
