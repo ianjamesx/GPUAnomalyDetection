@@ -1,12 +1,41 @@
 
+//get unique index for a thread
+__device__
+void getIndex(int blockIdx, int blockDim, int threadIdx, int &index){
+    index = blockIdx * blockDim + threadIdx;
+}
+
+//get stride for a thread
+__device__
+void getStride(int blockDimx, int gridDimx, int &stride){
+    stride = blockDimx * gridDimx;
+}
+
+//get range of workload for a thread to work on
+__device__
+void getRange(int index, int totalThreads, int workload, int &start, int &stop){
+
+    //get amount of stuff for each thread to cover (round up)
+    int workPerNode = ceil(workload / totalThreads);
+    if(workPerNode < 1) workPerNode = 1;
+
+    //get starting and stopping index for this thread
+    start = index * workPerThread;
+    stop = start + workPerThread;
+
+    //if this is the last thread, go until the end of the workload
+    if(index >= totalThreads-1){
+        stop = workload;
+    }
+
+}
+
 /*
 get starting index of a pair based off
     nk  - all pairs (820)
     i   - record index
     j   - pair index
     k   - pair size
-
-    CURRENT STATUS: MIGHT WORK
 */
 __device__
 void getPairIndex_real(int nk, int i, int j, int k, int &index){

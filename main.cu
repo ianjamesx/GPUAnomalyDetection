@@ -2,6 +2,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <stdlib.h>
+#include <math.h>
 
 #include <string>
 #include <iostream>
@@ -124,6 +125,13 @@ int main(){
         //printAllPairs_host(pair_buffer, pair_count, i, pair_size);
     }
 
+    int initBlocks = 64, initThreads = 512;
+    int allthreads = initBlocks * initThreads;
+
+    while(allthreads){
+        //launch thread with allthreads
+        allthreads /= 2;
+    }
 
     //locatePatterns(pair_buffer, occurance_buffer, record_count, pair_count, pair_size);
 

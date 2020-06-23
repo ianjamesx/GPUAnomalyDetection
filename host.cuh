@@ -227,3 +227,45 @@ void printRecord_full(float *all_records, int record_count, int record_size, int
     cout << endl;
 
 }
+
+
+//save patterns to parent list
+
+void saveToParentList(float *parentlist, float *pair, int *occurance_list, int patternfreq, int record_count, int pair_index, int pair_size){
+
+    int i, j;
+    for(i = 0; i < record_count; i++){
+
+        int currpair, match = 1;
+        getPairIndex_host(pair_count, i, pair_index, pair_size, currpair);
+
+        //see if curr pair is a match to this one
+        for(j = 0; j < pair_size; j++){
+            pairindex_real = currpair + j;
+            if(parentlist[pairindex_real] != pair[j]){
+                match = 0;
+            }
+        }
+
+        //if we have a match, add to total occurances
+        if(match){
+            occurance_list[currpair] += patternfreq;
+            return;
+        }
+
+        //if we hit a negative pattern value, there are no more pairs to compare, save pattern to free spot
+        if(parentlist[currpair] == -1){
+
+            //when we have an empty spot, write pair
+            for(j = 0; j < pair_size; j++){
+                pairindex_real = currpair + j;
+                parentlist[pairindex_real] = pair[j];
+            }
+
+            //also write frequency to occurance list
+            occurance_list[currpair] = patternfreq;
+
+        }
+    }
+
+}
