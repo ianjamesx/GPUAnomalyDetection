@@ -141,7 +141,6 @@ void generateNumericRecords(vector<vector<string> > rvect, float *records, int *
 
 void init_dataset(int &record_count, int &record_size, float *&records, int *&types){
 
-    int exact;
     //vector<vector<string> > record_tokens = readfile("./dataset/sample.data");
     vector<vector<string> > record_tokens = readfile("./dataset/simple.data");
 

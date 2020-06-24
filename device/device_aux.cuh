@@ -16,12 +16,12 @@ __device__
 void getRange(int index, int totalThreads, int workload, int &start, int &stop){
 
     //get amount of stuff for each thread to cover (round up)
-    int workPerNode = ceil(workload / totalThreads);
+    int workPerNode = ceilf(workload / totalThreads);
     if(workPerNode < 1) workPerNode = 1;
 
     //get starting and stopping index for this thread
-    start = index * workPerThread;
-    stop = start + workPerThread;
+    start = index * workPerNode;
+    stop = start + workPerNode;
 
     //if this is the last thread, go until the end of the workload
     if(index >= totalThreads-1){
@@ -166,29 +166,6 @@ void addOccurances(int *occurance_list, int pair_count, int record_index, int pa
 
 }
 
-__device__
-void printOccurances(int *occurance_list, int record_count, int pair_count){
-
-    int i, j;
-    for(i = 0; i < pair_count; i++){
-
-        printf("Pair (%d): ", i);
-
-        for(j = 0; j < record_count; j++){
-
-            int occuranceindex_real;
-            getOccuranceIndex_real(pair_count, j, i, occuranceindex_real);
-
-            printf("%d ", occurance_list[occuranceindex_real]);
-
-        }
-
-        printf("\n");
-
-    }
-
-}
-
 /*
 retrieve a pair of attributes from list of all pairs
 */
@@ -253,6 +230,39 @@ void removeBufferPair(float *all_pairs, int pair_count, int record_index, int pa
         all_pairs[all_pair_index] = -1.0;
     }
 
+}
+
+__device__
+void removeBufferOC(int *occurance_list, int pair_count, int record_index, int pair_index){
+    int occuranceindex_real;
+    getOccuranceIndex_real(pair_count, record_index, pair_index, occuranceindex_real);
+    occurance_list[occuranceindex_real] = 0;
+}
+
+__device__
+void occuranceCountInit(int *occurance_list, int pair_count, int record_index, int pair_index, int &occurances){
+    int occuranceindex_real;
+    getOccuranceIndex_real(pair_count, record_index, pair_index, occuranceindex_real);
+    //init occurance count for a given pair
+    //if occurance count is above 0, then the current pair has already been counted, init to 0,
+    //if not, init to 1 to count current pair
+    if(occurance_list[occuranceindex_real] == 0){
+        occurances = 1;
+    } else {
+        occurances = 0;
+    }
+}
+
+__device__
+void getOccuranceCount(int *occurance_list, int pair_count, int record_index, int pair_index, int &occurances){
+    int occuranceindex_real;
+    getOccuranceIndex_real(pair_count, record_index, pair_index, occuranceindex_real);
+    //if number of occurances is 0, return a 1 so occurance gets counted
+    if(occurance_list[occuranceindex_real] == 0){
+        occurances = 1;
+    } else {
+        occurances = occurance_list[occuranceindex_real];
+    }
 }
 
 /*

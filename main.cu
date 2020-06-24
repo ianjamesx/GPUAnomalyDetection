@@ -43,9 +43,9 @@ void hello(){
 
     int i, j, l;
 
-    int index, stride;
-    getIndex(blockIdx.x, blockDim.x, threadIdx.x, index);
-    getStride(blockDim.x, gridDim.x, stride);
+    int index=1, stride;
+    //getIndex(blockIdx.x, blockDim.x, threadIdx.x, index);
+    //getStride(blockDim.x, gridDim.x, stride);
 
     printf("Hello! From index %d\n", index);
 }
@@ -65,7 +65,7 @@ int main(){
     int i, j;
 
     for(i = 0; i < record_count; i++){
-        printRecord_full(records, record_count, record_size, i);
+        //printRecord_full(records, record_count, record_size, i);
     }
 
     /*
@@ -73,9 +73,69 @@ int main(){
     */
 
     int pair_size = 2;
-
     int pair_count = nk_count(record_size, pair_size);
 
+    //size of each pair compression batch
+    cout << pair_count << " " << pair_size << endl;
+    int batchsize = getPairBatchSize(pair_count, pair_size, .60);
+    int rounds = ceil(record_count / batchsize);
+    if(rounds < 1) rounds = 1;
+
+    cout << "rounds, batchsize: " << rounds << ", " << batchsize << endl;
+
+    int parentlist_size = pairlist_size(record_count, record_size, pair_size);
+    int OClist_size = occurancelist_size(record_count, record_size, pair_size);
+
+    //for host to maintain (parent list, occurance list)
+    float *parent_list = new float[parentlist_size];
+    int *OClist = new int[OClist_size];
+
+    //for device to compress (pair buffer, occurance buffer)
+    float *pair_buffer;
+    int *OCbuffer;
+
+    int pair_buffer_size = pairlist_size(batchsize, record_size, pair_size);
+    int occurance_list_size = occurancelist_size(batchsize, record_size, pair_size);
+    
+    gpuErrchk(cudaMallocManaged(&pair_buffer, pair_buffer_size * sizeof(float)));
+    gpuErrchk(cudaMallocManaged(&OCbuffer, occurance_list_size * sizeof(int)));
+
+    for(i = 0; i < rounds; i++){
+
+        //get starting/stopping record index for this batch
+        int record_start, record_stop;
+        getBatchStart(i, rounds, record_count, batchsize, record_start, record_stop);
+
+        int blocks = 1, threads = 2;
+
+        //generate pairing for this round
+        generatePairs<<<blocks, threads>>>(records, pair_buffer, record_start, record_stop, record_size, pair_count, pair_size);
+        cudaDeviceSynchronize();
+
+        int totalThreads = blocks * threads;
+        int record_pair_count = batchsize > record_count ? record_count : batchsize;
+
+        locatePatterns<<<blocks, threads>>>(pair_buffer, OCbuffer, record_pair_count, pair_count, pair_size, totalThreads);
+        cudaDeviceSynchronize();
+
+        printOccurances(OCbuffer, record_pair_count, pair_count);
+
+        printf("---------------\n");
+
+        threads = 1;
+        totalThreads = blocks * threads;
+        locatePatterns<<<blocks, threads>>>(pair_buffer, OCbuffer, record_pair_count, pair_count, pair_size, totalThreads);
+        cudaDeviceSynchronize();
+
+        for(i = 0; i < record_count; i++){
+            printAllPairs_host(pair_buffer, pair_count, i, pair_size);
+            printf("---------------------\n");
+        }
+
+        printOccurances(OCbuffer, record_pair_count, pair_count);
+
+    }
+/*
     //allocate managed memory for pair list
     float *pairs;
     int pair_list_size = pairlist_size(record_count, record_size, pair_size);
@@ -90,9 +150,9 @@ int main(){
        // printAllPairs_host(pairs, pair_count, i, pair_size);
     }
 
-    /*
-    allocate parent list and output list
-    */
+    
+    //allocate parent list and output list
+    
 
     //list used for all batches, keeps track of all substructures found
     float *parent_list;
@@ -113,9 +173,9 @@ int main(){
     gpuErrchk( cudaMallocManaged(&occurance_buffer, occurance_list_size * sizeof(int)) );
     occurancelist_init(occurance_buffer, occurance_list_size);
 
-    /*
-    locate patterns in the pairings
-    */
+    
+    //locate patterns in the pairings
+    
 
     //copy all pairs to buffer
     initOutputBuffer(pair_buffer, record_count, pair_count, pair_size);
@@ -140,6 +200,6 @@ int main(){
     //printAllPairsAllIndices_full(pair_buffer, record_count, pair_count, pair_size);
 
     //printOccurances(occurance_buffer, record_count, pair_count);
-
+*/
     return 0;
 }

@@ -23,6 +23,10 @@ void getPairIndex_host(int nk, int i, int j, int k, int &index){
     index = (j * k) + (nk * k * i);
 }
 
+void getOccuranceIndex_host(int c, int i, int j, int &index){
+    index = (i * c) + j;
+}
+
 /*
 
 shared memory array size getters
@@ -55,7 +59,7 @@ void occurancelist_init(int *occurance_list, int size){
     //initialize all occurances to 0
     int i;
     for(i = 0; i < size; i++){
-        occurance_list[i] = 0;
+        occurance_list[i] = 1;
     }
 }
 
@@ -123,6 +127,28 @@ void printAllPairsAllIndices_full(float *output_buffer, int record_count, int pa
         }
 
         cout << endl;
+
+    }
+
+}
+
+void printOccurances(int *occurance_list, int record_count, int pair_count){
+
+    int i, j;
+    for(i = 0; i < pair_count; i++){
+
+        printf("Pair (%d): ", i);
+
+        for(j = 0; j < record_count; j++){
+
+            int occuranceindex_real;
+            getOccuranceIndex_host(pair_count, j, i, occuranceindex_real);
+
+            printf("%d ", occurance_list[occuranceindex_real]);
+
+        }
+
+        printf("\n");
 
     }
 
@@ -231,7 +257,7 @@ void printRecord_full(float *all_records, int record_count, int record_size, int
 
 //save patterns to parent list
 
-void saveToParentList(float *parentlist, float *pair, int *occurance_list, int patternfreq, int record_count, int pair_index, int pair_size){
+void saveToParentList(float *parentlist, float *pair, int *occurance_list, int patternfreq, int record_count, int pair_index, int pair_count, int pair_size){
 
     int i, j;
     for(i = 0; i < record_count; i++){
@@ -241,7 +267,7 @@ void saveToParentList(float *parentlist, float *pair, int *occurance_list, int p
 
         //see if curr pair is a match to this one
         for(j = 0; j < pair_size; j++){
-            pairindex_real = currpair + j;
+            int pairindex_real = currpair + j;
             if(parentlist[pairindex_real] != pair[j]){
                 match = 0;
             }
@@ -258,7 +284,7 @@ void saveToParentList(float *parentlist, float *pair, int *occurance_list, int p
 
             //when we have an empty spot, write pair
             for(j = 0; j < pair_size; j++){
-                pairindex_real = currpair + j;
+                int pairindex_real = currpair + j;
                 parentlist[pairindex_real] = pair[j];
             }
 
@@ -266,6 +292,39 @@ void saveToParentList(float *parentlist, float *pair, int *occurance_list, int p
             occurance_list[currpair] = patternfreq;
 
         }
+    }
+
+}
+
+//get total global memory for GPU
+size_t getGPUGlobalMemory(){
+    cudaDeviceProp props;
+    cudaGetDeviceProperties(&props, 0);
+    cout << props.totalGlobalMem << endl;
+    return props.totalGlobalMem;
+}
+
+//get number of pairings the device can hold at once considering total device memory
+//only hold percent of total batch size
+int getPairBatchSize(int pair_count, int pair_size, float percent){
+
+    size_t totalGPUmem = getGPUGlobalMemory();
+    int sizePerRecord = pair_count * pair_size;
+    int memoryPerRecord = sizePerRecord * sizeof(float);
+    int batchsize = static_cast<int>((totalGPUmem / memoryPerRecord) * percent);
+    return batchsize;
+}
+
+//get starting and stopping indices of the current batch
+void getBatchStart(int curr_round, int total_rounds, int record_count, int batchsize, int &start, int &stop){
+
+    //get starting and stopping index for this round
+    start = curr_round * batchsize;
+    stop = start + batchsize;
+
+    //if this is the last thread, go until the end of the record count
+    if(curr_round == total_rounds-1){
+        stop = record_count;
     }
 
 }

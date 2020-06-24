@@ -1,6 +1,6 @@
 
 __global__
-void generatePairs(float *recordlist, float *pairlist, int record_count, int record_size, int pair_count, int pair_size){
+void generatePairs(float *recordlist, float *pairlist, int record_start, int record_stop, int record_size, int pair_count, int pair_size){
 
     int i, j, l;
 
@@ -8,11 +8,11 @@ void generatePairs(float *recordlist, float *pairlist, int record_count, int rec
     getIndex(blockIdx.x, blockDim.x, threadIdx.x, index);
     getStride(blockDim.x, gridDim.x, stride);
 
-    printf("Hello! From index %d, my stride: %d (%d, %d)\n", index, stride, record_size, record_count);
-
-    for(i = index; i < record_count; i += stride){ //<-- stride here by index
+    for(i = (index + record_start); i < record_stop; i += stride){ //<-- stride here by index
 
         int pair_index = 0;
+
+        //printf("Thread %d pairing record %d\n", index, i);
 
         for(j = 0; j < record_size; j++){
             for(l = j+1; l < record_size; l++){
@@ -50,17 +50,20 @@ void locatePatterns(float *pair_buffer, int *occurance_list, int record_count, i
     getIndex(blockIdx.x, blockDim.x, threadIdx.x, index);
     getRange(index, totalThreads, record_count, start, stop);
 
+    printf("Thread %d getting records %d ---> %d\n", index, start, stop);
+
     for(curr_pair = 0; curr_pair < pair_count; curr_pair++){ 
         for(curr_record = start; curr_record < stop; curr_record++){
 
             //first check if current pair has been removed, if it has, skip this pair
             int removed;
-            pairRemoved(pair_buffer, pair_count, curr_record1, curr_pair, pair_size, removed);
+            pairRemoved(pair_buffer, pair_count, curr_record, curr_pair, pair_size, removed);
             if(removed) continue;
 
             //number of occurances of this pattern in other records
-            int occurances = 1;
-            
+            int occurances;
+            occuranceCountInit(occurance_list, pair_count, curr_record, curr_pair, occurances);
+
             for(comparing_record = curr_record+1; comparing_record < stop; comparing_record++){
 
                 int isequal;
@@ -68,7 +71,12 @@ void locatePatterns(float *pair_buffer, int *occurance_list, int record_count, i
 
                 if(isequal){
                     removeBufferPair(pair_buffer, pair_count, comparing_record, curr_pair, pair_size);
-                    occurances++;
+                    removeBufferOC(occurance_list, pair_count, comparing_record, curr_pair);
+
+                    //increment occurances to number of occurances in other index
+                    int otherOccurances;
+                    getOccuranceCount(occurance_list, pair_count, curr_record, curr_pair, otherOccurances);
+                    occurances += otherOccurances;
                 }
             }
 
@@ -93,8 +101,10 @@ void reduceToParentList(float *pair_buffer, float *parent_list, int *occurance_l
 
             //first check if current pair has been removed, if it has, skip this pair
             int removed;
-            pairRemoved(pair_buffer, pair_count, curr_record1, curr_pair, pair_size, removed);
+            pairRemoved(pair_buffer, pair_count, curr_record, curr_pair, pair_size, removed);
             if(removed) continue;
+
+            int occurances = 1;
             
             for(comparing_record = curr_record+1; comparing_record < stop; comparing_record++){
 
