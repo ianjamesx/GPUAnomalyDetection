@@ -45,7 +45,7 @@ void locatePatterns(float *pair_buffer, int *occurance_list, int record_count, i
     //get range for this thread to cover
     int index, start, stop;
     getRange(threadIdx.x, threadmax, record_count, start, stop);
-    printf("Thread %d getting records %d ---> %d\n", threadIdx.x, start, stop);
+    //printf("Thread %d getting records %d ---> %d\n", threadIdx.x, start, stop);
 
     //pair covered is blockID
     curr_pair = blockIdx.x;
@@ -68,13 +68,14 @@ void locatePatterns(float *pair_buffer, int *occurance_list, int record_count, i
                 comparePairs(pair_buffer, pair_count, curr_record, comparing_record, curr_pair, pair_size, isequal);
 
                 if(isequal){
-                    removeBufferPair(pair_buffer, pair_count, comparing_record, curr_pair, pair_size);
-                    removeBufferOC(occurance_list, pair_count, comparing_record, curr_pair);
 
                     //increment occurances to number of occurances in other index
                     int otherOccurances;
-                    getOccuranceCount(occurance_list, pair_count, curr_record, curr_pair, otherOccurances);
+                    getOccuranceCount(occurance_list, pair_count, comparing_record, curr_pair, otherOccurances);
                     occurances += otherOccurances;
+
+                    removeBufferPair(pair_buffer, pair_count, comparing_record, curr_pair, pair_size);
+                    removeBufferOC(occurance_list, pair_count, comparing_record, curr_pair);
                 }
             }
 
@@ -85,17 +86,20 @@ void locatePatterns(float *pair_buffer, int *occurance_list, int record_count, i
 }
 
 /*
-when reducing to parent list, only 
-
+similar to pattern compression, take all compressed patterns (occurance counts, patterns)
+add occurances to same pattern in parent list if already exists, if not, add pattern to parent list
+have a block cover each unique pairing
+*/
+/*
 __global__
-void reduceToParentList(float *pair_buffer, float *parent_list, int *occurance_list, int *occurance_buffer, int record_count, int pair_count, int pair_size, int totalThreads){
+void reduceToParentList(float *pair_buffer, float *parent_list, int *occurance_list, int *occurance_buffer, int record_count, int pair_count, int pair_size, int threadmax){
 
     int curr_pair, curr_record, comparing_record;
 
-    //get range for this thread to cover
     int index, start, stop;
-    getIndex(blockIdx.x, blockDim.x, threadIdx.x, index);
-    getRange(index, totalThreads, record_count, start, stop);
+    getRange(threadIdx.x, threadmax, record_count, start, stop);
+    printf("Thread %d getting records %d ---> %d\n", threadIdx.x, start, stop);
+    curr_pair = blockIdx.x;
 
     for(curr_pair = 0; curr_pair < pair_count; curr_pair++){ 
         for(curr_record = start; curr_record < stop; curr_record++){
@@ -124,7 +128,7 @@ void reduceToParentList(float *pair_buffer, float *parent_list, int *occurance_l
     }
 
 }
-
+*/
 /*
 __global__
 void reducePatterns(float *pairlist, float *output_buffer, int *occurance_list, int record_count, int pair_count, int pair_size){

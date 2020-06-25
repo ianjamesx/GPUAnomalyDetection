@@ -12,12 +12,22 @@ void getStride(int blockDimx, int gridDimx, int &stride){
 }
 
 //get range of workload for a thread to work on
+//if workpernode is less than 2, then disable all other threads and single thread workload
 __device__
 void getRange(int index, int totalThreads, int workload, int &start, int &stop){
 
     //get amount of stuff for each thread to cover (round up)
     int workPerNode = ceilf(workload / totalThreads);
-    if(workPerNode < 1) workPerNode = 1;
+    if(workPerNode < 2){
+        if(index == 0){
+            start = 0;
+            stop = workload;
+        } else {
+            start = 0;
+            stop = 0;
+        }
+        return;
+    }
 
     //get starting and stopping index for this thread
     start = index * workPerNode;

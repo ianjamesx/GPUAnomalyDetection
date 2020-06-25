@@ -106,7 +106,7 @@ int main(){
         int record_start, record_stop;
         getBatchStart(i, rounds, record_count, batchsize, record_start, record_stop);
 
-        int blocks = 1, threads = 2;
+        int blocks = 1, threads = 5;
 
         //generate pairing for this round
         generatePairs<<<blocks, threads>>>(records, pair_buffer, record_start, record_stop, record_size, pair_count, pair_size);
@@ -115,14 +115,11 @@ int main(){
         int record_pair_count = batchsize > record_count ? record_count : batchsize;
 
         while(threads > 1){
-
             locatePatterns<<<pair_count, threads>>>(pair_buffer, OCbuffer, record_pair_count, pair_count, pair_size, threads);
             cudaDeviceSynchronize();
-
+            printOccurances(OCbuffer, record_pair_count, pair_count);
+            printf("-----------\n");
             threads /= 2;
-
-            printf("----------\n");
-
         }
 
         //run on single thread for final iteration
@@ -139,13 +136,14 @@ int main(){
         locatePatterns<<<blocks, threads>>>(pair_buffer, OCbuffer, record_pair_count, pair_count, pair_size, totalThreads);
         cudaDeviceSynchronize();
 */
-
+/*
         for(i = 0; i < record_count; i++){
             printAllPairs_host(pair_buffer, pair_count, i, pair_size);
             printf("---------------------\n");
         }
+*/
 
-        //printOccurances(OCbuffer, record_pair_count, pair_count);
+        printOccurances(OCbuffer, record_pair_count, pair_count);
 
     }
 /*
