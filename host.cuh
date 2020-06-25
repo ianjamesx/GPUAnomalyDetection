@@ -14,11 +14,16 @@ int nk_count(int n, int k){
 }
 
 /*
-
 indexing operations
-
 */
 
+/*
+get starting index of a pair based off
+    nk  - all pairs (820)
+    i   - record index
+    j   - pair index
+    k   - pair size
+*/
 void getPairIndex_host(int nk, int i, int j, int k, int &index){
     index = (j * k) + (nk * k * i);
 }
@@ -254,7 +259,6 @@ void printRecord_full(float *all_records, int record_count, int record_size, int
 
 }
 
-
 //save patterns to parent list
 
 void saveToParentList(float *parentlist, float *pair, int *occurance_list, int patternfreq, int record_count, int pair_index, int pair_count, int pair_size){
@@ -293,14 +297,24 @@ void saveToParentList(float *parentlist, float *pair, int *occurance_list, int p
 
         }
     }
-
 }
+/*
+void saveAllToParentList(float *parentlist, float *pairbuffer, int *OClist, int *OCbuffer, int record_count, int pair_count, int pair_size){
+
+    int i, j;
+    for(i = 0; i < pair_count; i++){
+
+    }
+    for(i = 0; i < record_count; i++){
+        saveToParentList(parentlist, pair, OClist, occurances, record_count, pair_index, pair_count, pair_size);
+    }
+
+}*/
 
 //get total global memory for GPU
 size_t getGPUGlobalMemory(){
     cudaDeviceProp props;
     cudaGetDeviceProperties(&props, 0);
-    cout << props.totalGlobalMem << endl;
     return props.totalGlobalMem;
 }
 

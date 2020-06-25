@@ -31,28 +31,26 @@ void generatePairs(float *recordlist, float *pairlist, int record_start, int rec
 }
 
 /*
-generate range of records for each unique thread to cover
-first, iterate through pairings (820)
-then get a record, iterate through rest of range to compare to record for that attribute
-if you find a matching attribute, remove the pair from the buffer so we dont count it multiple times in compression
-
-R^2 * NcK (500k^2 * 820)
+distribute a unique pairing to each block
+have each thread in block cover a range of record pairings
+compress all patterns, by end, all repeated patterns will be replaced with (-1...-1), OC replaced with 0
 */
 
 __global__
-void locatePatterns(float *pair_buffer, int *occurance_list, int record_count, int pair_count, int pair_size, int totalThreads){
+void locatePatterns(float *pair_buffer, int *occurance_list, int record_count, int pair_count, int pair_size, int threadmax){
 
     //iterators
     int curr_pair, curr_record, comparing_record;
 
     //get range for this thread to cover
     int index, start, stop;
-    getIndex(blockIdx.x, blockDim.x, threadIdx.x, index);
-    getRange(index, totalThreads, record_count, start, stop);
+    getRange(threadIdx.x, threadmax, record_count, start, stop);
+    printf("Thread %d getting records %d ---> %d\n", threadIdx.x, start, stop);
 
-    printf("Thread %d getting records %d ---> %d\n", index, start, stop);
+    //pair covered is blockID
+    curr_pair = blockIdx.x;
 
-    for(curr_pair = 0; curr_pair < pair_count; curr_pair++){ 
+    //for(curr_pair = 0; curr_pair < pair_count; curr_pair++){ 
         for(curr_record = start; curr_record < stop; curr_record++){
 
             //first check if current pair has been removed, if it has, skip this pair
@@ -83,8 +81,11 @@ void locatePatterns(float *pair_buffer, int *occurance_list, int record_count, i
             //add number of occurances of this pattern to list
             addOccurances(occurance_list, pair_count, curr_record, curr_pair, occurances);
         }
-    }
+    //}
 }
+
+/*
+when reducing to parent list, only 
 
 __global__
 void reduceToParentList(float *pair_buffer, float *parent_list, int *occurance_list, int *occurance_buffer, int record_count, int pair_count, int pair_size, int totalThreads){

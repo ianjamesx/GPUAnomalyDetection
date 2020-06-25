@@ -112,27 +112,40 @@ int main(){
         generatePairs<<<blocks, threads>>>(records, pair_buffer, record_start, record_stop, record_size, pair_count, pair_size);
         cudaDeviceSynchronize();
 
-        int totalThreads = blocks * threads;
         int record_pair_count = batchsize > record_count ? record_count : batchsize;
 
-        locatePatterns<<<blocks, threads>>>(pair_buffer, OCbuffer, record_pair_count, pair_count, pair_size, totalThreads);
+        while(threads > 1){
+
+            locatePatterns<<<pair_count, threads>>>(pair_buffer, OCbuffer, record_pair_count, pair_count, pair_size, threads);
+            cudaDeviceSynchronize();
+
+            threads /= 2;
+
+            printf("----------\n");
+
+        }
+
+        //run on single thread for final iteration
+        threads = 1;
+        locatePatterns<<<pair_count, 1>>>(pair_buffer, OCbuffer, record_pair_count, pair_count, pair_size, threads);
         cudaDeviceSynchronize();
 
-        printOccurances(OCbuffer, record_pair_count, pair_count);
+        //float *parentlist, float *pair, int *occurance_list, int patternfreq, int record_count, int pair_index, int pair_count, int pair_size
+        //saveToParentList(parentlist, pair_buffer, occurance_list, patternfreq, int record_count, int pair_index, int pair_count, int pair_size
 
-        printf("---------------\n");
-
+/*
         threads = 1;
         totalThreads = blocks * threads;
         locatePatterns<<<blocks, threads>>>(pair_buffer, OCbuffer, record_pair_count, pair_count, pair_size, totalThreads);
         cudaDeviceSynchronize();
+*/
 
         for(i = 0; i < record_count; i++){
             printAllPairs_host(pair_buffer, pair_count, i, pair_size);
             printf("---------------------\n");
         }
 
-        printOccurances(OCbuffer, record_pair_count, pair_count);
+        //printOccurances(OCbuffer, record_pair_count, pair_count);
 
     }
 /*
