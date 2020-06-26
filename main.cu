@@ -79,7 +79,13 @@ int main(){
     cout << pair_count << " " << pair_size << endl;
     int batchsize = getPairBatchSize(pair_count, pair_size, .60);
     int rounds = ceil(record_count / batchsize);
+
+    //bound round/batchsize
     if(rounds < 1) rounds = 1;
+    if(batchsize > record_count) batchsize = record_count;
+
+    //rounds = 2;
+    //batchsize = 3;
 
     cout << "rounds, batchsize: " << rounds << ", " << batchsize << endl;
 
@@ -108,11 +114,14 @@ int main(){
         int record_start, record_stop;
         getBatchStart(i, rounds, record_count, batchsize, record_start, record_stop);
 
-        int blocks = 1, threads = 16;
+        int blocks = 1, threads = 2;
 
         //generate pairing for this round
         generatePairs<<<blocks, threads>>>(records, pair_buffer, record_start, record_stop, record_size, pair_count, pair_size);
         cudaDeviceSynchronize();
+
+        printFullParentList(pair_buffer, batchsize, pair_count, pair_size);
+        printf("--------------\n");
 
         int record_pair_count = batchsize > record_count ? record_count : batchsize;
 
@@ -129,103 +138,23 @@ int main(){
         locatePatterns<<<pair_count, 1>>>(pair_buffer, OCbuffer, record_pair_count, pair_count, pair_size, threads);
         cudaDeviceSynchronize();
 
-        //float *parentlist, float *pair, int *occurance_list, int patternfreq, int record_count, int pair_index, int pair_count, int pair_size
-        //saveToParentList(parentlist, pair_buffer, occurance_list, patternfreq, int record_count, int pair_index, int pair_count, int pair_size
+        //save all patterns/occurances from buffer to parent list
+        saveAllToParentList(parent_list, pair_buffer, OClist, OCbuffer, batchsize, pair_count, pair_size);
 
-/*
-        threads = 1;
-        totalThreads = blocks * threads;
-        locatePatterns<<<blocks, threads>>>(pair_buffer, OCbuffer, record_pair_count, pair_count, pair_size, totalThreads);
-        cudaDeviceSynchronize();
-*/
-/*
-        for(i = 0; i < record_count; i++){
-            printAllPairs_host(pair_buffer, pair_count, i, pair_size);
-            printf("---------------------\n");
-        }
-*/
-
-        saveAllToParentList(parent_list, pair_buffer, OClist, OCbuffer, record_count, pair_count, pair_size);
-
-        printFullParentList(pair_buffer, record_count, pair_count, pair_size);
-        printFullParentList(parent_list, record_count, pair_count, pair_size);
-
-        printf("-----------------\n");
-
-        printOccurances(OCbuffer, record_pair_count, pair_count);
-        printOccurances(OClist, record_pair_count, pair_count);
-
-
+        //printFullParentList(pair_buffer, record_count, pair_count, pair_size);
         //printFullParentList(parent_list, record_count, pair_count, pair_size);
 
+        //printf("-----------------\n");
+
         //printOccurances(OCbuffer, record_pair_count, pair_count);
+        //printOccurances(OClist, record_pair_count, pair_count);
 
     }
-/*
-    //allocate managed memory for pair list
-    float *pairs;
-    int pair_list_size = pairlist_size(record_count, record_size, pair_size);
-    gpuErrchk( cudaMallocManaged(&pairs, pair_list_size * sizeof(float)) );
 
-    //generate pairs on device
-    generatePairs<<<1, 2>>>(records, pairs, record_count, record_size, pair_count, pair_size);
-    cudaDeviceSynchronize();
+    printf("--------------\n");
 
-    //print all pairings
-    for(i = 0; i < record_count; i++){
-       // printAllPairs_host(pairs, pair_count, i, pair_size);
-    }
+    //printFullParentList(parent_list, record_count, pair_count, pair_size);
+    //printOccurances(OClist, record_count, pair_count);
 
-    
-    //allocate parent list and output list
-    
-
-    //list used for all batches, keeps track of all substructures found
-    float *parent_list;
-    gpuErrchk( cudaMallocManaged(&parent_list, pair_list_size * sizeof(float)) );
-    
-    //buffer used for holding found substructures before comparing to parentlist
-    float *pair_buffer;
-    gpuErrchk( cudaMallocManaged(&pair_buffer, pair_list_size * sizeof(float)) );
-
-    //list of occurances of each substructure, indices align to parentlist
-    int *occurance_list;
-    int occurance_list_size = occurancelist_size(record_count, record_size, pair_size);
-    gpuErrchk( cudaMallocManaged(&occurance_list, occurance_list_size * sizeof(int)) );
-    occurancelist_init(occurance_list, occurance_list_size);
-
-    //also maintain a buffer for each iteration of occurances before copying to parentlist
-    int *occurance_buffer;
-    gpuErrchk( cudaMallocManaged(&occurance_buffer, occurance_list_size * sizeof(int)) );
-    occurancelist_init(occurance_buffer, occurance_list_size);
-
-    
-    //locate patterns in the pairings
-    
-
-    //copy all pairs to buffer
-    initOutputBuffer(pair_buffer, record_count, pair_count, pair_size);
-    copyPairsToBuffer_host(pairs, pair_buffer, record_count, pair_count, pair_size);
-
-    for(i = 0; i < record_count; i++){
-        //printAllPairs_host(pair_buffer, pair_count, i, pair_size);
-    }
-
-    int initBlocks = 64, initThreads = 512;
-    int allthreads = initBlocks * initThreads;
-
-    while(allthreads){
-        //launch thread with allthreads
-        allthreads /= 2;
-    }
-
-    //locatePatterns(pair_buffer, occurance_buffer, record_count, pair_count, pair_size);
-
-    //printOccurances(occurance_buffer, record_count, pair_count);
-
-    //printAllPairsAllIndices_full(pair_buffer, record_count, pair_count, pair_size);
-
-    //printOccurances(occurance_buffer, record_count, pair_count);
-*/
     return 0;
 }

@@ -332,6 +332,7 @@ void saveToParentList(float *parentlist, float *pair, int *occurance_list, int p
 void saveAllToParentList(float *parentlist, float *pairbuffer, int *OClist, int *OCbuffer, int record_count, int pair_count, int pair_size){
 
     int i, j, l;
+    float *curr_pair = new float[pair_size];
 
     for(i = 0; i < pair_count; i++){
         for(j = 0; j < record_count; j++){
@@ -350,7 +351,6 @@ void saveAllToParentList(float *parentlist, float *pairbuffer, int *OClist, int 
             int curr_OC = OCbuffer[curr_OC_index];
 
             //get pattern (pair) from buffer
-            float *curr_pair = new float[pair_size];
             for(l = 0; l < pair_size; l++){
                 curr_pair[l] = pairbuffer[currpair_index + l];
             }
@@ -360,7 +360,7 @@ void saveAllToParentList(float *parentlist, float *pairbuffer, int *OClist, int 
         }
     }
 
-    //delete [] curr_pair;
+    delete [] curr_pair;
 }
 
 
