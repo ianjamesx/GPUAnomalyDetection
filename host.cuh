@@ -259,32 +259,59 @@ void printRecord_full(float *all_records, int record_count, int record_size, int
 
 }
 
-//save patterns to parent list
+void initParentList(float *parentlist, int record_count, int record_size, int pair_size){
 
+    int len = pairlist_size(record_count, record_size, pair_size);
+    int i;
+    for(i = 0; i < len; i++){
+        parentlist[i] = -1.0;
+    }
+}
+
+void initOCList(int *OClist, int record_count, int record_size, int pair_size){
+
+    int len = occurancelist_size(record_count, record_size, pair_size);
+    int i;
+    for(i = 0; i < len; i++){
+        OClist[i] = 0.0;
+    }
+}
+
+//save patterns to parent list
 void saveToParentList(float *parentlist, float *pair, int *occurance_list, int patternfreq, int record_count, int pair_index, int pair_count, int pair_size){
 
     int i, j;
     for(i = 0; i < record_count; i++){
 
-        int currpair, match = 1;
+        int currpair, currOC, match = 1;
         getPairIndex_host(pair_count, i, pair_index, pair_size, currpair);
+        getOccuranceIndex_host(pair_count, i, pair_index, currOC);
+
+        if(pair_index == 3){
+            for(j = 0; j < pair_size; j++){
+                int pairindex_real = currpair + j;
+            }
+        }
 
         //see if curr pair is a match to this one
         for(j = 0; j < pair_size; j++){
             int pairindex_real = currpair + j;
             if(parentlist[pairindex_real] != pair[j]){
                 match = 0;
+                break;
             }
         }
 
         //if we have a match, add to total occurances
         if(match){
-            occurance_list[currpair] += patternfreq;
+            occurance_list[currOC] += patternfreq;
             return;
         }
 
         //if we hit a negative pattern value, there are no more pairs to compare, save pattern to free spot
-        if(parentlist[currpair] == -1){
+        if(parentlist[currpair] == -1.0){
+
+            //printf("Inserting at index %d\n", i);
 
             //when we have an empty spot, write pair
             for(j = 0; j < pair_size; j++){
@@ -293,23 +320,84 @@ void saveToParentList(float *parentlist, float *pair, int *occurance_list, int p
             }
 
             //also write frequency to occurance list
-            occurance_list[currpair] = patternfreq;
+            occurance_list[currOC] = patternfreq;
+
+            //return early to prevent iterating through remainding empty spaces
+            return;
 
         }
     }
 }
-/*
+
 void saveAllToParentList(float *parentlist, float *pairbuffer, int *OClist, int *OCbuffer, int record_count, int pair_count, int pair_size){
 
-    int i, j;
+    int i, j, l;
+
+    for(i = 0; i < pair_count; i++){
+        for(j = 0; j < record_count; j++){
+
+            int currpair_index;
+            getPairIndex_host(pair_count, j, i, pair_size, currpair_index);
+
+            //if pair removed
+            if(pairbuffer[currpair_index] == -1.0){
+                continue;
+            }
+
+            //get occurance count of current pattern from buffer
+            int curr_OC_index;
+            getOccuranceIndex_host(pair_count, j, i, curr_OC_index);
+            int curr_OC = OCbuffer[curr_OC_index];
+
+            //get pattern (pair) from buffer
+            float *curr_pair = new float[pair_size];
+            for(l = 0; l < pair_size; l++){
+                curr_pair[l] = pairbuffer[currpair_index + l];
+            }
+
+            //save to parent list
+            saveToParentList(parentlist, curr_pair, OClist, curr_OC, record_count, i, pair_count, pair_size);
+        }
+    }
+
+    //delete [] curr_pair;
+}
+
+
+//print every pair in a list that does not contain negative values
+void printFullParentList(float *parentlist, int record_count, int pair_count, int pair_size){
+
+    int i, j, l;
     for(i = 0; i < pair_count; i++){
 
-    }
-    for(i = 0; i < record_count; i++){
-        saveToParentList(parentlist, pair, OClist, occurances, record_count, pair_index, pair_count, pair_size);
+        cout << "Pair " << i << ": ";
+
+        for(j = 0; j < record_count; j++){
+
+            int currpair;
+            getPairIndex_host(pair_count, j, i, pair_size, currpair);
+
+            //negative pair, likely removed, skip this iteration
+            if(parentlist[currpair] == -1){
+                continue;
+            }
+
+            cout << "( ";
+
+            for(l = 0; l < pair_size; l++){
+                int record_curr_pair = currpair + l;
+                cout << parentlist[record_curr_pair] << " ";
+            }
+            
+            cout << ") ";
+
+        }
+
+        cout << endl;
+
     }
 
-}*/
+}
 
 //get total global memory for GPU
 size_t getGPUGlobalMemory(){

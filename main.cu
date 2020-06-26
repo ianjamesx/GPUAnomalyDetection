@@ -89,6 +89,8 @@ int main(){
     //for host to maintain (parent list, occurance list)
     float *parent_list = new float[parentlist_size];
     int *OClist = new int[OClist_size];
+    initParentList(parent_list, record_count, record_size, pair_size);
+    initOCList(OClist, record_count, record_size, pair_size);
 
     //for device to compress (pair buffer, occurance buffer)
     float *pair_buffer;
@@ -106,7 +108,7 @@ int main(){
         int record_start, record_stop;
         getBatchStart(i, rounds, record_count, batchsize, record_start, record_stop);
 
-        int blocks = 1, threads = 5;
+        int blocks = 1, threads = 16;
 
         //generate pairing for this round
         generatePairs<<<blocks, threads>>>(records, pair_buffer, record_start, record_stop, record_size, pair_count, pair_size);
@@ -117,8 +119,8 @@ int main(){
         while(threads > 1){
             locatePatterns<<<pair_count, threads>>>(pair_buffer, OCbuffer, record_pair_count, pair_count, pair_size, threads);
             cudaDeviceSynchronize();
-            printOccurances(OCbuffer, record_pair_count, pair_count);
-            printf("-----------\n");
+            //printOccurances(OCbuffer, record_pair_count, pair_count);
+            //printf("-----------\n");
             threads /= 2;
         }
 
@@ -143,7 +145,20 @@ int main(){
         }
 */
 
+        saveAllToParentList(parent_list, pair_buffer, OClist, OCbuffer, record_count, pair_count, pair_size);
+
+        printFullParentList(pair_buffer, record_count, pair_count, pair_size);
+        printFullParentList(parent_list, record_count, pair_count, pair_size);
+
+        printf("-----------------\n");
+
         printOccurances(OCbuffer, record_pair_count, pair_count);
+        printOccurances(OClist, record_pair_count, pair_count);
+
+
+        //printFullParentList(parent_list, record_count, pair_count, pair_size);
+
+        //printOccurances(OCbuffer, record_pair_count, pair_count);
 
     }
 /*
