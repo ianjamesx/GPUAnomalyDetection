@@ -23,6 +23,17 @@ using namespace std;
 
 #include "dataread.h"
 
+//device error check
+#define gpuErrchk(ans) { gpuAssert((ans), __FILE__, __LINE__); }
+inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=true)
+{
+   if (code != cudaSuccess) 
+   {
+      fprintf(stderr,"GPUassert: %s %s %d\n", cudaGetErrorString(code), file, line);
+      if (abort) exit(code);
+   }
+}
+
 //typedef/structs
 typedef pair<float, float> Pairing;
 
@@ -34,6 +45,9 @@ typedef struct patternData {
     int occurances;
 
 } patternData;
+
+
+#include "frequent.cuh"
 
 void printPD(patternData pd){
 
@@ -142,6 +156,59 @@ int mostFreqPattern(vector<vector<float> > records, patternData &pd){
 
     //return 1 if still >2, if not, return 0
     if(allmode > 0){
+        return 1;
+    }
+
+    return 0;
+
+}
+
+int mostFreqPatternDevice(vector<vector<float> > records, patternData &pd){
+
+    //convert 2d vector to 1d array to use on device
+
+    float *record_dev;
+    int record_count = records.size(), record_size = records[0].size();
+    int record_dev_size = record_size * record_count;
+    gpuErrchk(cudaMallocManaged(&record_dev, record_dev_size * sizeof(float)));
+
+    //copy records over
+    int i, j, curr_index = 0;
+    for(i = 0; i < record_count; i++){
+        for(j = 0; j < record_size; j++){
+            record_dev[curr_index] = records[i][j];
+            curr_index++;
+        }
+    }
+
+    int blocks = 820;
+    int threads = 512;
+
+    //allocate for patterns
+    patternData *patterns;
+    gpuErrchk(cudaMallocManaged(&patterns, blocks * sizeof(patternData)));
+
+    //find most frequent pattern (on gpu)
+    mostFreqPattern<<<blocks, threads, (threads*sizeof(int))>>>(record_dev, record_size, record_count, patterns);
+    cudaDeviceSynchronize();
+
+    //see which of the 820 pairings in patterns list is most common
+    int maxindex = 0;
+    int maxoc = 0;
+    for(i = 0; i < blocks; i++){
+        if(patterns[i].occurances > maxoc){
+            maxoc = patterns[i].occurances;
+            maxindex = i;
+        }
+    }
+
+    pd = patterns[maxindex];
+
+    //free all cuda data
+    cudaFree(record_dev);
+    cudaFree(patterns);
+
+    if(maxoc > 0){
         return 1;
     }
 
@@ -314,6 +381,8 @@ int main(){
     //init recordsizes
     initRecordSizes(recordsizes, record_count);
 
+    //printall(records);
+
     vector<float> ranks;
 
     int found = 1;
@@ -326,11 +395,9 @@ int main(){
 
         cout << "iteration " << curr_iter << endl;
 
-        //cout << "finding pattern..." << endl;
         patternData pd;
         found = mostFreqPattern(records, pd);
-
-        //printPD(pd);
+        //found = mostFreqPatternDevice(records, pd);
 
         occurances.push_back(pd.occurances);
 
@@ -346,8 +413,6 @@ int main(){
         //update iteration
         iterations.push_back(curr_iter);
         curr_iter++;
-
-        //cout << "done...." << endl;
 
     }
 
