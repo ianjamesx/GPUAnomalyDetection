@@ -147,7 +147,8 @@ void init_dataset(int &record_count, int &record_size, vector<vector<float> > &r
 
     //vector<vector<string> > record_tokens = readfile("./dataset/sample.data");
     //vector<vector<string> > record_tokens = readfile("./dataset/simple.data");
-    vector<vector<string> > record_tokens = readfile("./dataset/s500.data");
+    //vector<vector<string> > record_tokens = readfile("./dataset/s500.data");
+    vector<vector<string> > record_tokens = readfile("./dataset/sample_35000.data");
     //vector<vector<string> > record_tokens = readfile("./dataset/kddcup_10percent.data");
 
     //allocate space for number of records * number of attributes per record (e.g 500k * 42)

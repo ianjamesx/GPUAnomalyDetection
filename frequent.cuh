@@ -48,6 +48,8 @@ void mostFreqPattern(float *records, int record_size, int record_count, patternD
     int max_oc = 0; //largest number of occurances found
     float max_p1, max_p2; //most common pairing
 
+    int iters = 0;
+
     int i, j;
     for(i = threadIdx.x; i < record_count; i += blockDim.x){ //stride here
 
@@ -66,6 +68,8 @@ void mostFreqPattern(float *records, int record_size, int record_count, patternD
         if(records[r1_attr1_ind] == records[r1_attr2_ind] && records[r1_attr1_ind] < 0) continue;
 
         for(j = i+1; j < record_count; j++){
+
+            iters++;
 
             //get record pairing to compare to
             int r2_attr1_ind, r2_attr2_ind;
@@ -119,6 +123,10 @@ void mostFreqPattern(float *records, int record_size, int record_count, patternD
         occurances[0] = allmax_index;
     }
     __syncthreads();
+
+    if(threadIdx.x == 0){
+        //printf("block %d done\n", blockIdx.x);
+    }
 
     //if this thread is most frequent pattern, assign data to output array at unique pattern spot
     if(occurances[0] == threadIdx.x){

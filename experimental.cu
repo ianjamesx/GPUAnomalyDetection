@@ -17,9 +17,11 @@
 #include <thrust/host_vector.h>
 #include <thrust/device_vector.h>
 #include <thrust/copy.h>
-#include <thrust/count.h>
+#include <thrust/sort.h>
+#include <thrust/execution_policy.h>
 
 using namespace std;
+using namespace std::chrono; 
 
 #include "dataread.h"
 
@@ -45,7 +47,6 @@ typedef struct patternData {
     int occurances;
 
 } patternData;
-
 
 #include "frequent.cuh"
 
@@ -182,7 +183,7 @@ int mostFreqPatternDevice(vector<vector<float> > records, patternData &pd){
     }
 
     int blocks = 820;
-    int threads = 512;
+    int threads = 24;
 
     //allocate for patterns
     patternData *patterns;
@@ -360,7 +361,7 @@ int main(){
 
     init_dataset(record_count, record_size, records, record_types);
 
-    cout << "Finished read in\n";
+    cout << "Finished read in, finna process " << record_count << " records" << endl;
 
     /*
     generate pairs
@@ -383,7 +384,7 @@ int main(){
 
     //printall(records);
 
-    vector<float> ranks;
+    float termination_ratio = .2;
 
     int found = 1;
 
@@ -392,20 +393,25 @@ int main(){
     while(found){
 
         //find most frequent pattern
-
-        cout << "iteration " << curr_iter << endl;
-
         patternData pd;
-        found = mostFreqPattern(records, pd);
-        //found = mostFreqPatternDevice(records, pd);
-
-        occurances.push_back(pd.occurances);
+        //found = mostFreqPattern(records, pd);
+        auto start = high_resolution_clock::now(); 
+        found = mostFreqPatternDevice(records, pd);
+        auto stop = high_resolution_clock::now();
+        auto duration = duration_cast<microseconds>(stop - start); 
+        cout << "pattern found in: " << (duration.count() * .000001) << endl; 
+        occurances.push_back(pd.occurances); 
+        //64: 53.5287
+        //256: 58.7085
+        //32: 19.4089
+        //24: 17.0192
 
         //compress pattern found
         //cout << "done... compressing pattern..." << endl;
+
         if(found){
             compressPatterns(records, parentlist, pd);
-        }
+        } 
 
         //count sizes of each record after compression
         updateRecordSizes(records, recordsizes);
@@ -414,19 +420,45 @@ int main(){
         iterations.push_back(curr_iter);
         curr_iter++;
 
+        if(curr_iter % 10 == 0){
+            cout << "ratio: " << (pd.occurances / (record_count * 1.0)) << endl;
+        }
+
+        //printPD(pd);
+
+        if((pd.occurances / (record_count * 1.0)) < termination_ratio){
+            break;
+        }
+
+        //if(curr_iter > 500) break;
+
     }
 
     for(i = 0; i < parentlist.size(); i++){
         //cout << parentlist[i].first << ", " << parentlist[i].second << ": " << occurances[i] << ", " << iterations[i] << endl;
     }
-    cout << "---------\n";
-    //printall(records);
-    cout << "total iters: " << curr_iter << endl;
+    cout << "---------\n" << "total iters: " << curr_iter << endl;
 
     //score all records
+    vector<float> record_ranks;
+
     for(i = 0; i < record_count; i++){
-      float score = rankRecord(records[i], recordsizes[i]);
-      cout << "record " << i << ": " << score << endl;
+        record_ranks.push_back(rankRecord(records[i], recordsizes[i]));
+    }
+
+    cout << "copying... sorting...\n";
+
+    float *rank_arr = new float[record_count];
+    float *type_arr = new float[record_count];
+    copy(record_ranks.begin(), record_ranks.end(), rank_arr);
+    copy(record_types.begin(), record_types.end(), type_arr);
+    thrust::sort_by_key(thrust::host, rank_arr, rank_arr + record_count, type_arr);
+
+    //after sort, most anomalous records will be at top of array
+    for(i = record_count-1; i > record_count; i--){
+        if(type_arr[i] != 0){
+            cout << (record_count - i) << ": " << type_arr[i] << " - " << rank_arr[i] << endl;
+        }
     }
 
     return 0;
