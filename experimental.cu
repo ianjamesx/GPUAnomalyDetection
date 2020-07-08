@@ -183,7 +183,7 @@ int mostFreqPatternDevice(vector<vector<float> > records, patternData &pd){
     }
 
     int blocks = 820;
-    int threads = 24;
+    int threads = 32;
 
     //allocate for patterns
     patternData *patterns;
@@ -229,9 +229,6 @@ void compressPatterns(vector<vector<float> > &records, vector<Pairing> &parentli
 
     float p1 = pd.pattern.first, p2 = pd.pattern.second;
 
-    //caching corresponding variables, will be overwritten on first search
-    int compIndex1 = -1, compIndex2 = -1;
-
     //replace all instances of the pattern with negative index in parentlist
     for(i = 0; i < records.size(); i++){
         if(records[i][pd.index1] == p1 && records[i][pd.index2] == p2){
@@ -265,7 +262,7 @@ get the size, in elements (compressed or uncompressed) of a record
 */
 int getRecordSize(vector<float> record){
 
-    int i, j;
+    int i;
     int size = 0;
     set<float> compressions;
 
@@ -319,7 +316,7 @@ float rankRecord(vector<float> record, vector<int> attributecount){
       if(attributecount[i] == prevAttrCount){
           compression = 0.0;
       } else {
-          compression = 1.0 / constattr;
+          compression = 1.0 / attributecount[i];
       }
 
       //update previous attribute count for next iteration
@@ -349,6 +346,99 @@ void printall(vector<vector<float> > records){
 
 }
 
+bool isAttack(int type){
+    if(type == 0){
+        return false;
+    }
+    return true;
+}
+
+void rankstats(int *record_types, float *record_ranks, int record_count, float runtime, int iterations){
+
+    float threshold = .6;
+
+    int TP = 0, FP = 0, TN = 0, FN = 0;
+    
+    //for writing anomalies to file
+    ofstream anoms;
+    ofstream normal;
+    ofstream report;
+    anoms.open("./logs/anoms.log");
+    normal.open("./logs/normal.log");
+    report.open("./logs/report.log");
+
+    int i;
+    for(i = 0; i < record_count; i++){
+
+        //true negative case
+        if((!isAttack(record_types[i])) && record_ranks[i] < threshold){
+            TN++;
+        }
+        //false negative case
+        if(isAttack(record_types[i]) && record_ranks[i] < threshold){
+            FN++;
+        }
+        //true positive case
+        if(isAttack(record_types[i]) && record_ranks[i] >= threshold){
+            TP++;
+        }
+        //false positive case
+        if((!isAttack(record_types[i])) && record_ranks[i] >= threshold){
+            FP++;
+            normal << "FALSE POS " << record_types[i] << ": " << record_ranks[i] << endl;
+        }
+
+        if(isAttack(record_types[i])){
+            anoms << "ANOMALY " << record_types[i] << ": " << record_ranks[i] << endl;
+        }
+
+    }
+
+    anoms.close();
+    normal.close();
+
+    double TPR = (TP * 1.0) / static_cast<double>(TP + FN);
+
+    report << "Iterations: " << iterations << endl;
+    report << "Runtime: " << runtime << endl;
+
+    report << "TN: " << TN << endl;
+    report << "FN: " << FN << endl;
+    report << "TP: " << TP << endl;
+    report << "FP: " << FP << endl;
+    report << "TPR: " << TPR << endl;
+
+    report.close();
+
+}
+
+void printranks(int *record_types, float *record_ranks, int record_count, int max){
+
+    int i;
+    for(i = record_count-1; i > record_count-max; i--){
+        cout << record_types[i] << ": " << record_ranks[i] << endl;
+    }
+}
+
+void printTypeOccurances(vector<int> record_types){
+
+    int ocs[23];
+    int i;
+
+    for(i = 0; i < 23; i++){
+        ocs[i] = 0;
+    }
+
+    for(i = 0; i < record_types.size(); i++){
+        ocs[record_types[i]]++;
+    }
+
+    for(i = 0; i < 23; i++){
+        cout << "TYPE " << i << ": " << ocs[i] << endl;
+    }
+
+}
+
 int main(){
 
     /*
@@ -361,18 +451,11 @@ int main(){
 
     init_dataset(record_count, record_size, records, record_types);
 
-    cout << "Finished read in, finna process " << record_count << " records" << endl;
-
     /*
     generate pairs
     */
 
-    //printRecord_full(records, record_count, record_size, 0);
-
-    int i, j;
-    int common = 0, uncommon = 0;
-
-    //printall(records);
+    int i;
 
     vector<Pairing> parentlist;
     vector<int> occurances;
@@ -382,33 +465,33 @@ int main(){
     //init recordsizes
     initRecordSizes(recordsizes, record_count);
 
-    //printall(records);
+    printTypeOccurances(record_types);
 
-    float termination_ratio = .2;
+    cout << record_count << endl;
 
+    float termination_ratio = .25;
     int found = 1;
-
     int curr_iter = 0;
+
+    auto fullstart = high_resolution_clock::now(); 
 
     while(found){
 
         //find most frequent pattern
         patternData pd;
-        //found = mostFreqPattern(records, pd);
+
         auto start = high_resolution_clock::now(); 
+
+        //found = mostFreqPattern(records, pd);
         found = mostFreqPatternDevice(records, pd);
+
         auto stop = high_resolution_clock::now();
         auto duration = duration_cast<microseconds>(stop - start); 
-        cout << "pattern found in: " << (duration.count() * .000001) << endl; 
+        //cout << "pattern found in: " << (duration.count() * .000001) << endl; 
+
         occurances.push_back(pd.occurances); 
-        //64: 53.5287
-        //256: 58.7085
-        //32: 19.4089
-        //24: 17.0192
 
-        //compress pattern found
-        //cout << "done... compressing pattern..." << endl;
-
+        //if a pattern was found, compress it
         if(found){
             compressPatterns(records, parentlist, pd);
         } 
@@ -420,46 +503,35 @@ int main(){
         iterations.push_back(curr_iter);
         curr_iter++;
 
-        if(curr_iter % 10 == 0){
+        if(curr_iter % 5 == 0){
             cout << "ratio: " << (pd.occurances / (record_count * 1.0)) << endl;
         }
-
-        //printPD(pd);
 
         if((pd.occurances / (record_count * 1.0)) < termination_ratio){
             break;
         }
-
-        //if(curr_iter > 500) break;
-
     }
 
-    for(i = 0; i < parentlist.size(); i++){
-        //cout << parentlist[i].first << ", " << parentlist[i].second << ": " << occurances[i] << ", " << iterations[i] << endl;
-    }
-    cout << "---------\n" << "total iters: " << curr_iter << endl;
+    auto fullstop = high_resolution_clock::now();
+    auto fullduration = duration_cast<microseconds>(fullstop - fullstart);
+
+    cout << "Iterations: " << curr_iter << endl;
+    cout << "Time for algo: " << (fullduration.count() * .000001) << endl;
 
     //score all records
     vector<float> record_ranks;
-
     for(i = 0; i < record_count; i++){
         record_ranks.push_back(rankRecord(records[i], recordsizes[i]));
     }
 
-    cout << "copying... sorting...\n";
-
     float *rank_arr = new float[record_count];
-    float *type_arr = new float[record_count];
+    int *type_arr = new int[record_count];
     copy(record_ranks.begin(), record_ranks.end(), rank_arr);
     copy(record_types.begin(), record_types.end(), type_arr);
     thrust::sort_by_key(thrust::host, rank_arr, rank_arr + record_count, type_arr);
 
-    //after sort, most anomalous records will be at top of array
-    for(i = record_count-1; i > record_count; i--){
-        if(type_arr[i] != 0){
-            cout << (record_count - i) << ": " << type_arr[i] << " - " << rank_arr[i] << endl;
-        }
-    }
+    rankstats(type_arr, rank_arr, record_count, (fullduration.count() * .000001), curr_iter);
+    printranks(type_arr, rank_arr, record_count, 20);
 
     return 0;
 

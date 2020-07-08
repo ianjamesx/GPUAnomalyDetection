@@ -38,11 +38,11 @@ void getAttributeIndex(int record_size, int i, int j, int &index){
 __global__
 void mostFreqPattern(float *records, int record_size, int record_count, patternData *pd){
 
-    //get pairing indices for this block
+    //get pairing indices for this blocks pairing (i, j)
     int index1, index2;
     getPairingIndices(blockIdx.x, record_size, index1, index2);
 
-    //will need threads * 3 for occurance array, formatted as occurances, element1, element2 ...
+    //will store max amount of occurances found here for root thread to find max
     extern __shared__ int occurances[];
 
     int max_oc = 0; //largest number of occurances found
