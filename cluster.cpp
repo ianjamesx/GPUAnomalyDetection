@@ -104,7 +104,7 @@ vector<range> attributeRanges(vector<vector<float> > records){
 
 float scaleValue(float r_min, float r_max, float t_min, float t_max, float m){
 
-  //if rmax == rmin (usualy for 0 values) return t_min (usually 0)
+  //if rmax == rmin (usualy for 0 values) return t_min (usually 0, to symbolize all values will be identical)
   if(r_max == r_min){
     return t_min;
   }
@@ -146,25 +146,9 @@ double edgeweight(vector<float> v1, vector<float> v2){
 
     vector<float> v3;
     vectorsubtraction(v1, v2, v3);
-/*
-    int i;
-    for(i = 0; i < v1.size(); i++){
-        cout << v1[i] << " ";
-    }
-    cout << endl;
-    for(i = 0; i < v2.size(); i++){
-        cout << v2[i] << " ";
-    }
-    cout << endl;
-    for(i = 0; i < v3.size(); i++){
-        cout << v3[i] << " ";
-    }
-    cout << endl;
-*/
+
     float normalized = normalizevector(v3);
-
     double base = exp(normalized);
-
     return (1 / base);
 }
 
@@ -180,12 +164,7 @@ int main(){
     init_dataset(record_count, record_size, records, record_types);
 
     cout <<  record_count << endl;
-/*
-    double param, result;
-    param = 5.0;
-    result = exp (param);
-    printf ("The exponential value of %f is %f.\n", param, result );
-*/
+
 
     //double edge = edgeweight(records[0], records[4]);
 
@@ -232,12 +211,9 @@ int main(){
         }
     }
 
-
-    cout << edgeweight(records[0], records[records.size()-1])<< endl;
-
     for(i = 0; i < records.size(); i++){
         for(j = 0; j < records.size(); j++){
-          cout << setprecision(2) << edgematrix[i][j] << " ";
+          cout << setprecision(4) << edgematrix[i][j] << " ";
         }
         cout << endl;
     }
