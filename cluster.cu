@@ -33,6 +33,11 @@ struct range {
   float max;
 };
 
+struct edgedata {
+  float weight;
+  int vertex;
+};
+
 #include "cluster_device.cuh"
 
 //device error check
@@ -203,21 +208,20 @@ int main(){
       }
     }
 
-    //edgeGeneration<<<2, 4>>>(NULL, 2, 2);
-
     /*
     populate edge matrix
     */
 
-
-    //float *edgematrix = new float[records.size() * records.size()];
-
     //printRecords(records);
 
-    float *edgematrix, *recordmatrix;
-    int edge_msize = records.size() * records.size();
+    int k = 5;
+
+    float *recordmatrix;
+    edgedata *edgematrix;
+    int edge_msize = records.size() * k;//records.size();
     int records_msize = records.size() * record_size;
-    gpuErrchk(cudaMallocManaged(&edgematrix, edge_msize * sizeof(float)));
+    cout << "ems: " << edge_msize << ", " << records_msize << endl;
+    gpuErrchk(cudaMallocManaged(&edgematrix, edge_msize * sizeof(edgedata)));
     gpuErrchk(cudaMallocManaged(&recordmatrix, records_msize * sizeof(float)));
 
     //copy records to a unified array from stl vector (so it can work on cuda kernel)
@@ -229,6 +233,10 @@ int main(){
       }
     }
 
+    //init all elements in edge matrix to -1
+    for(i = 0; i < edge_msize; i++){
+      edgematrix[i].weight = -1.0;
+    }
 
     /*
     printRecords(records);
@@ -243,27 +251,37 @@ int main(){
     */
 
     //start kernel
+ 
   
-    edgeGeneration<<<16, 64>>>(edgematrix, recordmatrix, record_size, record_count);
+    edgeGeneration<<<16, 64>>>(edgematrix, recordmatrix, record_size, record_count, k);
     cudaDeviceSynchronize();
 
     cout << "--------------\n";
 
     //printRecords(records);
 
-    
-    /*
 
-    for(i = 0; i < records.size(); i++){
-        for(j = 0; j < records.size(); j++){
-          int curredge = getMatrixIndex(records.size(), i, j);
-          cout << setprecision(4) << edgematrix[curredge] << " ";
-        }
+    
+    //print k nearest neighbors
+    for(i = 0; i < 10; i++){
+      for(j = 0; j < k; j++){
+        int curredge = getMatrixIndex(k, i, j);
+        cout << setprecision(4) << "( " << edgematrix[curredge].weight << " " << edgematrix[curredge].vertex << ") ";
+      }
       cout << endl;
     }
 
-    */
+    cout << "........\n";
 
+    for(i = record_count-10; i < record_count; i++){
+      for(j = 0; j < k; j++){
+        int curredge = getMatrixIndex(k, i, j);
+        cout << setprecision(4) << "( " << edgematrix[curredge].weight << " " << edgematrix[curredge].vertex << ") ";
+      }
+      cout << endl;
+    }
+
+    
 
     
     /*

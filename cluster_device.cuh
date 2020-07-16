@@ -40,8 +40,6 @@ void vectorsubtraction(float *records, float *vbuffer, int r1, int r2, int vsize
     }
 }
 
-
-
 __device__
 float normalizevector(float *v, int vsize){
 
@@ -53,22 +51,38 @@ float normalizevector(float *v, int vsize){
 
     return sqrt(total);
 }
-/*
+
 __device__
-double edgeweight(float *v1, float *v2){
+void knn(edgedata *edges, int k, int src, int dest, float weight){
 
-    vector<float> v3;
-    vectorsubtraction(v1, v2, v3);
+    //int edgeindex = getMatrixIndex_device(record_count, i, j);
 
-    float normalized = normalizevector(v3);
-    double base = exp(normalized);
-    return (1 / base);
+    //see if this weight is larger than any others in the list
+    int i;
+    for(i = 0; i < k; i++){
+        int edgeindex = getMatrixIndex_device(k, src, i);
+        if(edges[edgeindex].weight < weight){
+
+            //save current weight/vertex to buffers
+            float wbuffer = edges[edgeindex].weight;
+            int vbuffer= edges[edgeindex].vertex;
+
+            //replace current index in src vertex knn with dest
+            edges[edgeindex].weight = weight;
+            edges[edgeindex].vertex = dest;
+
+            //recurse through with edge being replaced if there are any other candidates
+            knn(edges, k, src, vbuffer, wbuffer);
+
+            //break so we dont replace any other elements
+            break;
+        }
+    }
+
 }
-*/
-
 
 __global__
-void edgeGeneration(float *edges, float *records, int record_size, int record_count){
+void edgeGeneration(edgedata *edges, float *records, int record_size, int record_count, int k){
 
     int i, j;
     int index = uniqueIndex();
@@ -79,26 +93,31 @@ void edgeGeneration(float *edges, float *records, int record_size, int record_co
     float *vbuffer = new float[record_size];
 
     for(i = index; i < record_count; i += stride){
+
+        //if(index == 0)
+                //printf("Thread %d on %d %d\n", index, i);
+
         for(j = 0; j < record_count; j++){
 
-            //if compare to this record, simply set to 0 as it will be identical
-            if(i == j){
-                int edgeindex = getMatrixIndex_device(record_count, i, j);
-                edges[edgeindex] = 0;
-                continue;
+            //if we are comparing this record to itself, skip
+            if(i != j){
+
+                vectorsubtraction(records, vbuffer, i, j, record_size);
+
+                //normalize vector, set edge weight
+                float normalized = normalizevector(vbuffer, record_size);
+                float base = exp(normalized);
+                float weight = (1 / base);
+
+                //update knn graph with the new weight
+                knn(edges, k, i, j, weight);
+
             }
-
-            vectorsubtraction(records, vbuffer, i, j, record_size);
-
-            //normalize vector, set edge weight
-            float normalized = normalizevector(vbuffer, record_size);
-            float base = exp(normalized);
-
-            int edgeindex = getMatrixIndex_device(record_count, i, j);
-            edges[edgeindex] = (1 / base);
-
+            
         }
 
     }
+
+    delete [] vbuffer;
 
 }
