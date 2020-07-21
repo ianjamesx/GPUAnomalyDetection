@@ -38,6 +38,11 @@ struct edgedata {
   int vertex;
 };
 
+struct location {
+  float x;
+  float y;
+};
+
 #include "cluster_device.cuh"
 
 //device error check
@@ -263,10 +268,11 @@ int main(){
 
     
     //print k nearest neighbors
-    for(i = 0; i < 10; i++){
+    for(i = 0; i < 50; i++){
       for(j = 0; j < k; j++){
         int curredge = getMatrixIndex(k, i, j);
-        cout << setprecision(4) << "( " << edgematrix[curredge].weight << " " << edgematrix[curredge].vertex << ") ";
+        cout << setprecision(2) << edgematrix[curredge].weight << " ";
+        //cout << setprecision(4) << "( " << edgematrix[curredge].weight << " " << edgematrix[curredge].vertex << ") ";
       }
       cout << endl;
     }
@@ -276,44 +282,146 @@ int main(){
     for(i = record_count-10; i < record_count; i++){
       for(j = 0; j < k; j++){
         int curredge = getMatrixIndex(k, i, j);
-        cout << setprecision(4) << "( " << edgematrix[curredge].weight << " " << edgematrix[curredge].vertex << ") ";
+        cout << setprecision(2) << edgematrix[curredge].weight << " ";
+        //cout << setprecision(4) << "( " << edgematrix[curredge].weight << " " << edgematrix[curredge].vertex << ") ";
+      }
+      cout << endl;
+    }
+    
+
+    /*
+    begin clustering approach
+    */
+
+  
+    /*
+    generate random positions based on indices of records
+    */
+
+    int *p = new int[record_count];
+    for(i = 0; i < record_count; i++){
+      //init locations to its source vertex index
+      p[i] = i;
+    }
+
+    for(i = 0; i < record_count; i++){
+      //assign each vertex a random location
+      p[i] = rand() % (record_count);
+    }
+
+    for(i = 0; i < 50; i++){
+      cout << p[i] << endl;
+    }
+
+    int rounds = 15;
+    int l;
+    for(l = 0; l < rounds; l++){
+
+      for(i = 0; i < record_count; i++){
+
+        //move vertices based on force from neighbors
+        float distance = 0.0;
+        for(j = 0; j < k; j++){
+  
+          //get vertex to compare to
+          int compedge = getMatrixIndex(k, i, j);
+          int compvertex = edgematrix[compedge].vertex;
+ 
+          if(edgematrix[compedge].weight == -1) continue;
+
+          //move distance between two vertices proportional to weight between them
+          p[i] -= ((p[i] - p[compvertex]) * edgematrix[compedge].weight);
+        }
+  
+        //p[i] += distance;
+      }
+  
+      //remove edges with lower than average scores
+      for(i = 0; i < record_count; i++){
+  
+        float total = 0.0;
+        for(j = 0; j < k; j++){
+          int curredge = getMatrixIndex(k, i, j);
+  
+          //skip if edge has been cut
+          if(edgematrix[curredge].weight == -1) continue;
+  
+          total += edgematrix[curredge].weight;
+        }
+  
+        float avg = (total / k);
+  
+        for(j = 0; j < k; j++){
+          int curredge = getMatrixIndex(k, i, j);
+          if(edgematrix[curredge].weight < avg){
+            edgematrix[curredge].weight = -1;
+          }
+        }
+      }
+
+    }
+
+    cout << "------------------------\n";
+
+    for(i = 0; i < 10; i++){
+      cout << p[i] << endl;
+    }
+    cout << "~~~~~~~~~~~\n";
+    for(i = record_count-10; i < record_count; i++){
+      cout << p[i] << endl;
+    }
+
+
+    /*
+    int l;
+    for(l = 0; l < 5; l++){
+
+      for(i = 0; i < record_count; i++){
+
+        float total = 0.0;
+        for(j = 0; j < k; j++){
+          int curredge = getMatrixIndex(k, i, j);
+
+          //skip if edge has been cut
+          if(edgematrix[curredge].weight == -1) continue;
+
+          total += edgematrix[curredge].weight;
+        }
+  
+        float avg = (total / k);
+  
+        if(i > 5490){
+          cout << "avg: " << avg << ", " << total << endl;
+        }
+        for(j = 0; j < k; j++){
+          int curredge = getMatrixIndex(k, i, j);
+          if(edgematrix[curredge].weight < avg){
+            edgematrix[curredge].weight = -1;
+          }
+        }
+      }
+    }
+  
+    for(i = 0; i < 50; i++){
+      for(j = 0; j < k; j++){
+        int curredge = getMatrixIndex(k, i, j);
+        cout << setprecision(2) << edgematrix[curredge].weight << " ";
+        //cout << setprecision(4) << "( " << edgematrix[curredge].weight << " " << edgematrix[curredge].vertex << ") ";
       }
       cout << endl;
     }
 
-    
+    cout << "........\n";
 
-    
-    /*
-    //COMPARING DEVICE TO HOST IMPLEMENTATION ON EDGE CALCS
-    
-    float *edgematrix_host = new float[edge_msize];
-    for(i = 0; i < records.size(); i++){
-        for(j = 0; j < records.size(); j++){
-          int curredge = getMatrixIndex(records.size(), i, j);
-          if(i == j){
-            edgematrix_host[curredge] = 0;
-            continue;
-          }
-          edgematrix_host[curredge] = edgeweight(records[i], records[j]);
-        }
-    }
-
-
-    for(i = 0; i < records.size(); i++){
-      for(j = 0; j < records.size(); j++){
-        int curredge = getMatrixIndex(records.size(), i, j);
-        if(!cmfl(edgematrix[curredge], edgematrix_host[curredge])){
-          cout << edgematrix_host[curredge] << " : " << edgematrix[curredge] << endl;
-        }
+    for(i = record_count-10; i < record_count; i++){
+      for(j = 0; j < k; j++){
+        int curredge = getMatrixIndex(k, i, j);
+        cout << setprecision(2) << edgematrix[curredge].weight << " ";
+        //cout << setprecision(4) << "( " << edgematrix[curredge].weight << " " << edgematrix[curredge].vertex << ") ";
       }
+      cout << endl;
     }
-    printf("ALL GOOD!\n");
-    */
-    
-    
-
-
+*/
 
 /*
     int i, j;
