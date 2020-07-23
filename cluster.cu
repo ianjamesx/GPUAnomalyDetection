@@ -309,32 +309,51 @@ int main(){
       p[i] = rand() % (record_count);
     }
 
-    for(i = 0; i < 50; i++){
-      cout << p[i] << endl;
-    }
-
-    int rounds = 15;
     int l;
-    for(l = 0; l < rounds; l++){
+    for(l = 0; l < 5; l++){
 
       for(i = 0; i < record_count; i++){
 
+        //first, get some of all valence weights on this vertex
+        float valenceweight = 0.0;
+        for(j = 0; j < k; j++){
+  
+          //get vertex to compare to
+          int valenceedge = getMatrixIndex(k, i, j);
+          valenceweight += edgematrix[valenceedge].weight;
+        }
+  
         //move vertices based on force from neighbors
-        float distance = 0.0;
+        float force = 0.0;
         for(j = 0; j < k; j++){
   
           //get vertex to compare to
           int compedge = getMatrixIndex(k, i, j);
           int compvertex = edgematrix[compedge].vertex;
- 
-          if(edgematrix[compedge].weight == -1) continue;
-
+  
+          //if(edgematrix[compedge].weight == -1) continue;
+  
           //move distance between two vertices proportional to weight between them
-          p[i] -= ((p[i] - p[compvertex]) * edgematrix[compedge].weight);
+          //p[i] -= ((p[i] - p[compvertex]) * edgematrix[compedge].weight);
+          force += ((p[i] - p[compvertex]) * edgematrix[compedge].weight);
         }
   
-        //p[i] += distance;
+        force *= -1;
+        force *= (1/(valenceweight+1));
+  
+        if(i < 10 || i > record_count-10){
+          cout << setprecision(6) << "force on " << i << ": " << force << ", total weight: " << valenceweight << endl;
+        }
       }
+
+      cout << "--------------\n";
+
+    }
+
+    /*
+    int rounds = 15;
+    int l;
+    for(l = 0; l < rounds; l++){
   
       //remove edges with lower than average scores
       for(i = 0; i < record_count; i++){
@@ -370,6 +389,13 @@ int main(){
     for(i = record_count-10; i < record_count; i++){
       cout << p[i] << endl;
     }
+*/
+
+
+
+
+
+
 
 
     /*
