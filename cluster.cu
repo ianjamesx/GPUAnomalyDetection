@@ -225,8 +225,6 @@ int main(){
     populate edge matrix
     */
 
-    //printRecords(records);
-
     int k = 25;
 
     float *recordmatrix;
@@ -251,21 +249,8 @@ int main(){
       edgematrix[i].weight = -1.0;
     }
 
-    /*
-    printRecords(records);
-    cout << "-------------\n";
-    for(i = 0; i < record_count; i++){
-      for(j = 0; j < record_size; j++){
-        int currindex = getMatrixIndex(record_size, i, j);
-        cout << recordmatrix[currindex] << " ";
-      }
-      cout << endl;
-    }
-    */
 
     //start kernel
- 
-  
     edgeGeneration<<<16, 64>>>(edgematrix, recordmatrix, record_size, record_count, k);
     cudaDeviceSynchronize();
 
@@ -273,10 +258,9 @@ int main(){
 
     //printRecords(records);
 
-
     
     //print k nearest neighbors
-    for(i = 0; i < 50; i++){
+    for(i = 0; i < 10; i++){
       for(j = 0; j < 5; j++){
         int curredge = getMatrixIndex(k, i, j);
         //cout << setprecision(2) << edgematrix[curredge].weight << " ";
@@ -287,7 +271,7 @@ int main(){
 
     cout << "........\n";
 
-    for(i = record_count-30; i < record_count; i++){
+    for(i = record_count-10; i < record_count; i++){
       for(j = 0; j < 5; j++){
         int curredge = getMatrixIndex(k, i, j);
         //cout << setprecision(2) << edgematrix[curredge].weight << " ";
@@ -364,9 +348,7 @@ int main(){
       }
   
       //after moving vertices, record lengths of each edge
-  
       for(i = 0; i < record_count; i++){
-  
         for(j = 0; j < k; j++){
   
           //get vertex to compare to
@@ -379,8 +361,8 @@ int main(){
             distance *= -1;
           }
   
-          //edgelengths[compedge] += distance;
-          edgelengths[compedge] = distance;
+          edgelengths[compedge] += distance;
+          //edgelengths[compedge] = distance;
         }
         
       }
@@ -396,27 +378,6 @@ int main(){
         edgelengths[compedge] /= 5;
       }
     }
-
-    for(i = 0; i < 10; i++){
-      for(j = 0; j < 15; j++){
-        int curredge = getMatrixIndex(k, i, j);
-        cout << setprecision(4) << "( " << edgelengths[curredge] << " " << edgematrix[curredge].vertex << ") ";
-      }
-      cout << endl;
-    }
-
-    cout << "-----------------------\n";
-
-    for(i = record_count-10; i < record_count; i++){
-      for(j = 0; j < 15; j++){
-        int curredge = getMatrixIndex(k, i, j);
-        cout << setprecision(4) << "( " << edgelengths[curredge] << " " << edgematrix[curredge].vertex << ") ";
-      }
-      cout << endl;
-    }
-
-    cout << "~~~~~~~~~~\n";
-
     
 
     //get average of all edges connected to vertex i
@@ -460,148 +421,5 @@ int main(){
       cout << endl;
     }
 
-
-
-    cout << "-------------------\n";
-/*
-    int anoms = 0;
-    int normals = 0;
-
-    int normcount = 0, anomcount = 0;
-
-    for(i = 0; i < record_count; i++){
-      if(record_types[i] == 0){
-        normals += p[i];
-        normcount++;
-      } else {
-        anoms += p[i];
-        anomcount++;
-      }
-    }
-
-    for(i = 0; i < 10; i++){
-      cout << i << ": " << p[i] << endl;
-    }
-
-    cout << "---------------------\n";
-
-    for(i = record_count-10; i < record_count; i++){
-      cout << i << ": " << p[i] << endl;
-    }
-
-    int normalavg = (normals / normcount);
-    int anomavg = (anoms / anomcount);
-
-    cout << setprecision(5) << "Normla avg: " << normalavg << endl;
-    cout << setprecision(5) << "Anom avg: " << anomavg << endl;
-
-    /*
-    int rounds = 15;
-    int l;
-    for(l = 0; l < rounds; l++){
-  
-      //remove edges with lower than average scores
-      for(i = 0; i < record_count; i++){
-  
-        float total = 0.0;
-        for(j = 0; j < k; j++){
-          int curredge = getMatrixIndex(k, i, j);
-  
-          //skip if edge has been cut
-          if(edgematrix[curredge].weight == -1) continue;
-  
-          total += edgematrix[curredge].weight;
-        }
-  
-        float avg = (total / k);
-  
-        for(j = 0; j < k; j++){
-          int curredge = getMatrixIndex(k, i, j);
-          if(edgematrix[curredge].weight < avg){
-            edgematrix[curredge].weight = -1;
-          }
-        }
-      }
-
-    }
-
-    cout << "------------------------\n";
-
-    for(i = 0; i < 10; i++){
-      cout << p[i] << endl;
-    }
-    cout << "~~~~~~~~~~~\n";
-    for(i = record_count-10; i < record_count; i++){
-      cout << p[i] << endl;
-    }
-*/
-
-
-
-
-
-
-
-
-    /*
-    int l;
-    for(l = 0; l < 5; l++){
-
-      for(i = 0; i < record_count; i++){
-
-        float total = 0.0;
-        for(j = 0; j < k; j++){
-          int curredge = getMatrixIndex(k, i, j);
-
-          //skip if edge has been cut
-          if(edgematrix[curredge].weight == -1) continue;
-
-          total += edgematrix[curredge].weight;
-        }
-  
-        float avg = (total / k);
-  
-        if(i > 5490){
-          cout << "avg: " << avg << ", " << total << endl;
-        }
-        for(j = 0; j < k; j++){
-          int curredge = getMatrixIndex(k, i, j);
-          if(edgematrix[curredge].weight < avg){
-            edgematrix[curredge].weight = -1;
-          }
-        }
-      }
-    }
-  
-    for(i = 0; i < 50; i++){
-      for(j = 0; j < k; j++){
-        int curredge = getMatrixIndex(k, i, j);
-        cout << setprecision(2) << edgematrix[curredge].weight << " ";
-        //cout << setprecision(4) << "( " << edgematrix[curredge].weight << " " << edgematrix[curredge].vertex << ") ";
-      }
-      cout << endl;
-    }
-
-    cout << "........\n";
-
-    for(i = record_count-10; i < record_count; i++){
-      for(j = 0; j < k; j++){
-        int curredge = getMatrixIndex(k, i, j);
-        cout << setprecision(2) << edgematrix[curredge].weight << " ";
-        //cout << setprecision(4) << "( " << edgematrix[curredge].weight << " " << edgematrix[curredge].vertex << ") ";
-      }
-      cout << endl;
-    }
-*/
-
-/*
-    int i, j;
-    for(i = 0; i < records.size(); i++){
-        for(j = 0; j < records.size(); j++){
-            if(i == j) cout << i << ", " << j << ": " << 0 << endl;
-            cout << i << ", " << j << ": " << edgeweight(records[i], records[j]) << endl;
-        }
-    }
-*/
     return 0;
 }
