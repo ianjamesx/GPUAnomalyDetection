@@ -52,6 +52,8 @@ float normalizevector(float *v, int vsize){
     return sqrt(total);
 }
 
+//09...8S#$
+
 __device__
 void knn(edgedata *edges, int k, int src, int dest, float weight){
 

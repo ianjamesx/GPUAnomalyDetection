@@ -87,6 +87,13 @@ bool symbolic(int index){
   return false;
 }
 
+bool edgeRemoved(edgedata edge){
+  if(edge.vertex < 0){
+    return true;
+  }
+  return false;
+}
+
 /*
 get range [min, max] of all continous attributes
 */
@@ -188,6 +195,7 @@ int main(){
     cout <<  record_count << endl;
 
 
+
     //double edge = edgeweight(records[0], records[4]);
 
     vector<range> ranges = attributeRanges(records);
@@ -219,7 +227,7 @@ int main(){
 
     //printRecords(records);
 
-    int k = 5;
+    int k = 25;
 
     float *recordmatrix;
     edgedata *edgematrix;
@@ -269,21 +277,21 @@ int main(){
     
     //print k nearest neighbors
     for(i = 0; i < 50; i++){
-      for(j = 0; j < k; j++){
+      for(j = 0; j < 5; j++){
         int curredge = getMatrixIndex(k, i, j);
-        cout << setprecision(2) << edgematrix[curredge].weight << " ";
-        //cout << setprecision(4) << "( " << edgematrix[curredge].weight << " " << edgematrix[curredge].vertex << ") ";
+        //cout << setprecision(2) << edgematrix[curredge].weight << " ";
+        cout << setprecision(4) << "( " << edgematrix[curredge].weight << " " << edgematrix[curredge].vertex << ") ";
       }
       cout << endl;
     }
 
     cout << "........\n";
 
-    for(i = record_count-10; i < record_count; i++){
-      for(j = 0; j < k; j++){
+    for(i = record_count-30; i < record_count; i++){
+      for(j = 0; j < 5; j++){
         int curredge = getMatrixIndex(k, i, j);
-        cout << setprecision(2) << edgematrix[curredge].weight << " ";
-        //cout << setprecision(4) << "( " << edgematrix[curredge].weight << " " << edgematrix[curredge].vertex << ") ";
+        //cout << setprecision(2) << edgematrix[curredge].weight << " ";
+        cout << setprecision(4) << "( " << edgematrix[curredge].weight << " " << edgematrix[curredge].vertex << ") ";
       }
       cout << endl;
     }
@@ -293,62 +301,199 @@ int main(){
     begin clustering approach
     */
 
+    /*
+    init matrix used for keeping edge lengths/scoring
+    at end of algorithm edgelengths will be total of all lengths recorded
+    */
+
+    float *edgelengths = new float[record_count * k];
+    for(i = 0; i < (record_count * k); i++){
+      edgelengths[i] = 0.0;
+    }
   
     /*
     generate random positions based on indices of records
     */
 
     int *p = new int[record_count];
-    for(i = 0; i < record_count; i++){
-      //init locations to its source vertex index
-      p[i] = i;
-    }
+    float *locavgs = new float[record_count];
 
-    for(i = 0; i < record_count; i++){
-      //assign each vertex a random location
-      p[i] = rand() % (record_count);
-    }
-
-    int l;
-    for(l = 0; l < 5; l++){
+    int t;
+    for(t = 0; t < 5; t++){
 
       for(i = 0; i < record_count; i++){
-
-        //first, get some of all valence weights on this vertex
-        float valenceweight = 0.0;
-        for(j = 0; j < k; j++){
+        //assign each vertex a random location
+        p[i] = rand() % (record_count*25);
+      }
   
-          //get vertex to compare to
-          int valenceedge = getMatrixIndex(k, i, j);
-          valenceweight += edgematrix[valenceedge].weight;
+      int l;
+      for(l = 0; l < 5; l++){
+  
+        for(i = 0; i < record_count; i++){
+  
+          //first, get sum of all valence weights on this vertex (so we can get an average)
+          float valenceweight = 0.0;
+          for(j = 0; j < k; j++){
+    
+            //get vertex to compare to
+            int valenceedge = getMatrixIndex(k, i, j);
+            valenceweight += edgematrix[valenceedge].weight;
+          }
+    
+          //move vertices based on force from neighbors
+          float force = 0.0;
+          for(j = 0; j < k; j++){
+    
+            //get vertex to compare to
+            int compedge = getMatrixIndex(k, i, j);
+            int compvertex = edgematrix[compedge].vertex;
+
+            //add force from neighbor vertex
+            force += ((p[i] - p[compvertex]) * edgematrix[compedge].weight);
+          }
+    
+  
+          //account for gain μ
+          force *= (1/(valenceweight+1));
+  
+          //change position in accordance to force present on it
+          p[i] -= force;
+          
         }
   
-        //move vertices based on force from neighbors
-        float force = 0.0;
+      }
+  
+      //after moving vertices, record lengths of each edge
+  
+      for(i = 0; i < record_count; i++){
+  
         for(j = 0; j < k; j++){
   
           //get vertex to compare to
           int compedge = getMatrixIndex(k, i, j);
           int compvertex = edgematrix[compedge].vertex;
+ 
+          //get distance between two vertices
+          float distance = (p[i] - p[compvertex]);
+          if(distance < 0){
+            distance *= -1;
+          }
   
-          //if(edgematrix[compedge].weight == -1) continue;
-  
-          //move distance between two vertices proportional to weight between them
-          //p[i] -= ((p[i] - p[compvertex]) * edgematrix[compedge].weight);
-          force += ((p[i] - p[compvertex]) * edgematrix[compedge].weight);
+          //edgelengths[compedge] += distance;
+          edgelengths[compedge] = distance;
         }
-  
-        force *= -1;
-        force *= (1/(valenceweight+1));
-  
-        if(i < 10 || i > record_count-10){
-          cout << setprecision(6) << "force on " << i << ": " << force << ", total weight: " << valenceweight << endl;
-        }
+        
       }
 
-      cout << "--------------\n";
-
     }
+
+    //now we start cutting edges with higher lengths than others, as such, k value with vary vertex to vertex
+
+    //take average of all edge lengths (as of now, it is total of lengths after all trials)
+    for(i = 0; i < record_count; i++){
+      for(j = 0; j < k; j++){
+        int compedge = getMatrixIndex(k, i, j);
+        edgelengths[compedge] /= 5;
+      }
+    }
+
+    for(i = 0; i < 10; i++){
+      for(j = 0; j < 15; j++){
+        int curredge = getMatrixIndex(k, i, j);
+        cout << setprecision(4) << "( " << edgelengths[curredge] << " " << edgematrix[curredge].vertex << ") ";
+      }
+      cout << endl;
+    }
+
+    cout << "-----------------------\n";
+
+    for(i = record_count-10; i < record_count; i++){
+      for(j = 0; j < 15; j++){
+        int curredge = getMatrixIndex(k, i, j);
+        cout << setprecision(4) << "( " << edgelengths[curredge] << " " << edgematrix[curredge].vertex << ") ";
+      }
+      cout << endl;
+    }
+
+    cout << "~~~~~~~~~~\n";
+
+    
+
+    //get average of all edges connected to vertex i
+    for(i = 0; i < record_count; i++){
+      float localtotal = 0.0;
+      for(j = 0; j < k; j++){
+        int compedge = getMatrixIndex(k, i, j);
+        localtotal += edgelengths[compedge];
+      }
+      float localavg = localtotal / k;
+      locavgs[i] = localavg;
+      
+      //cut edges (set weight, vertex to -1) with a length longer than average
+      for(j = 0; j < k; j++){
+        int compedge = getMatrixIndex(k, i, j);
+        if(edgelengths[compedge] > localavg){
+          edgematrix[compedge].vertex = -1;
+          edgematrix[compedge].weight = -1;
+          edgelengths[compedge] = -1;
+        };
+      }
+    }
+
+    for(i = 0; i < 10; i++){
+      cout << locavgs[i] << ": ";
+      for(j = 0; j < 15; j++){
+        int curredge = getMatrixIndex(k, i, j);
+        cout << setprecision(4) << "( " << edgelengths[curredge] << " " << edgematrix[curredge].vertex << ") ";
+      }
+      cout << endl;
+    }
+
+    cout << "-----------------------\n";
+
+    for(i = record_count-10; i < record_count; i++){
+      cout << locavgs[i] << ": ";
+      for(j = 0; j < 15; j++){
+        int curredge = getMatrixIndex(k, i, j);
+        cout << setprecision(4) << "( " << edgelengths[curredge] << " " << edgematrix[curredge].vertex << ") ";
+      }
+      cout << endl;
+    }
+
+
+
+    cout << "-------------------\n";
+/*
+    int anoms = 0;
+    int normals = 0;
+
+    int normcount = 0, anomcount = 0;
+
+    for(i = 0; i < record_count; i++){
+      if(record_types[i] == 0){
+        normals += p[i];
+        normcount++;
+      } else {
+        anoms += p[i];
+        anomcount++;
+      }
+    }
+
+    for(i = 0; i < 10; i++){
+      cout << i << ": " << p[i] << endl;
+    }
+
+    cout << "---------------------\n";
+
+    for(i = record_count-10; i < record_count; i++){
+      cout << i << ": " << p[i] << endl;
+    }
+
+    int normalavg = (normals / normcount);
+    int anomavg = (anoms / anomcount);
+
+    cout << setprecision(5) << "Normla avg: " << normalavg << endl;
+    cout << setprecision(5) << "Anom avg: " << anomavg << endl;
 
     /*
     int rounds = 15;
