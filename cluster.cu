@@ -181,6 +181,13 @@ double edgeweight(vector<float> v1, vector<float> v2){
     return (1 / base);
 }
 
+bool isAttack(int type){
+  if(type == 0){
+    return false;
+  }
+  return true;
+}
+
 int main(){
 
     /*
@@ -201,12 +208,6 @@ int main(){
     vector<range> ranges = attributeRanges(records);
 
     int i, j;
-
-    for(i = 0; i < ranges.size(); i++){
-      cout << "(" << ranges[i].min << ", " << ranges[i].max << ") ";
-    }
-
-    cout << endl;
 
     /*
     scale values
@@ -231,7 +232,6 @@ int main(){
     edgedata *edgematrix;
     int edge_msize = records.size() * k;//records.size();
     int records_msize = records.size() * record_size;
-    cout << "ems: " << edge_msize << ", " << records_msize << endl;
     gpuErrchk(cudaMallocManaged(&edgematrix, edge_msize * sizeof(edgedata)));
     gpuErrchk(cudaMallocManaged(&recordmatrix, records_msize * sizeof(float)));
 
@@ -254,32 +254,7 @@ int main(){
     edgeGeneration<<<16, 64>>>(edgematrix, recordmatrix, record_size, record_count, k);
     cudaDeviceSynchronize();
 
-    cout << "--------------\n";
-
-    //printRecords(records);
-
-    
-    //print k nearest neighbors
-    for(i = 0; i < 10; i++){
-      for(j = 0; j < 5; j++){
-        int curredge = getMatrixIndex(k, i, j);
-        //cout << setprecision(2) << edgematrix[curredge].weight << " ";
-        cout << setprecision(4) << "( " << edgematrix[curredge].weight << " " << edgematrix[curredge].vertex << ") ";
-      }
-      cout << endl;
-    }
-
-    cout << "........\n";
-
-    for(i = record_count-10; i < record_count; i++){
-      for(j = 0; j < 5; j++){
-        int curredge = getMatrixIndex(k, i, j);
-        //cout << setprecision(2) << edgematrix[curredge].weight << " ";
-        cout << setprecision(4) << "( " << edgematrix[curredge].weight << " " << edgematrix[curredge].vertex << ") ";
-      }
-      cout << endl;
-    }
-    
+    cout << "Done edge generation\n";
 
     /*
     begin clustering approach
@@ -401,6 +376,8 @@ int main(){
       }
     }
 
+    /*
+
     for(i = 0; i < 10; i++){
       cout << locavgs[i] << ": ";
       for(j = 0; j < 15; j++){
@@ -420,6 +397,72 @@ int main(){
       }
       cout << endl;
     }
+
+    */
+
+    /*
+    ranking system
+    iterate over each record, take percentage of connections to same type
+    e.g. if record is connected to 4 others of same type, 1 of different type, rank is 80%
+    */
+
+    float *accuracy = new float[record_count];
+    float *sensitivity = new float[record_count];
+
+    for(i = 0; i < record_count; i++){
+
+      int edgecount = 0;
+      int sametype = 0;
+      int generaltype = 0;
+      int thistype = record_types[i];
+
+      for(j = 0; j < k; j++){
+        
+        //skip edge if it has already been removed
+        int curredge = getMatrixIndex(k, i, j);
+        if(edgeRemoved(edgematrix[curredge])) continue;
+
+        //compare type of connecting vertex to this vertex (compare types for sensitivity)
+        int currvertex = edgematrix[curredge].vertex;
+        if(record_types[currvertex] == thistype){
+          sametype++;
+        }
+
+        //compare general type (attack or no attack)
+        if(isAttack(record_types[currvertex]) == isAttack(thistype)){
+          generaltype++;
+        }
+        edgecount++;
+
+      }
+
+      //take percentage of same types this record is connected to
+      sensitivity[i] = (sametype*1.0) / edgecount;
+      accuracy[i] = (generaltype*1.0) / edgecount;
+
+    }
+
+    /*
+    for(i = 0; i < record_count; i++){
+      if(accuracy[i] < 1.0){
+        cout << "accuracy " << i << ": " << accuracy[i] << endl;
+      }
+      if(sensitivity[i] < 1.0){
+        cout << "sensitivity " << i << ": " << sensitivity[i] << endl;
+      }
+    }
+    */
+
+    float accuracytotal = 0.0;
+    float sensitivitytotal = 0.0;
+    for(i = 0; i < record_count; i++){
+      accuracytotal += accuracy[i];
+      sensitivitytotal += sensitivity[i];
+    }
+
+    cout << "Accuracy: " << (accuracytotal / record_count) << endl;
+    cout << "Sensitivity: " << (sensitivitytotal / record_count) << endl;
+
 
     return 0;
 }
