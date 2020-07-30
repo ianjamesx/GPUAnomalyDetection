@@ -233,8 +233,6 @@ int main(){
     gpuErrchk(cudaMallocManaged(&edgematrix, edge_msize * sizeof(edgedata)));
     gpuErrchk(cudaMallocManaged(&recordmatrix, records_msize * sizeof(float)));
 
-    cout << "CUDA allocation finished\n";
-
     //copy records to a unified array from stl vector (so it can work on cuda kernel)
     int curr = 0;
     for(i = 0; i < records.size(); i++){
@@ -252,8 +250,6 @@ int main(){
     //start kernel
     edgeGeneration<<<16, 64>>>(edgematrix, recordmatrix, record_size, record_count, k);
     cudaDeviceSynchronize();
-
-    cout << "edge generation finished\n";
 
     /*
     begin clustering approach
@@ -283,8 +279,6 @@ int main(){
         //assign each vertex a random location
         p[i] = rand() % (record_count*25);
       }
-
-      cout << "Assigned to random " << t << endl;
   
       int l;
       for(l = 0; l < 5; l++){
@@ -311,10 +305,6 @@ int main(){
             //add force from neighbor vertex
             force += ((p[i] - p[compvertex]) * edgematrix[compedge].weight);
           }
-
-          if(i % 1000 == 0){
-            cout << "In reaction " << i << endl;
-          }
     
           //account for gain μ
           force *= (1/(valenceweight+1));
@@ -324,11 +314,7 @@ int main(){
           
         }
 
-        cout << "Reacted to force " << l << endl;
-  
       }
-
-      cout << "Moved on force " << t << endl;
   
       //after moving vertices, record lengths of each edge
       for(i = 0; i < record_count; i++){
@@ -350,11 +336,7 @@ int main(){
         
       }
 
-      cout << "Recorded edge length " << t << endl;
-
     }
-
-    cout << "location simulation finished\n";
 
     //now we start cutting edges with higher lengths than others, as such, k value with vary vertex to vertex
 
@@ -387,8 +369,6 @@ int main(){
         };
       }
     }
-
-    cout << "edge cutting finished\n";
 
     /*
     ranking system
