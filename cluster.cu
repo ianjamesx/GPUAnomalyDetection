@@ -283,6 +283,8 @@ int main(){
         //assign each vertex a random location
         p[i] = rand() % (record_count*25);
       }
+
+      cout << "Assigned to random " << i << endl;
   
       int l;
       for(l = 0; l < 5; l++){
@@ -320,6 +322,8 @@ int main(){
         }
   
       }
+
+      cout << "Moved on force " << i << endl;
   
       //after moving vertices, record lengths of each edge
       for(i = 0; i < record_count; i++){
@@ -340,6 +344,8 @@ int main(){
         }
         
       }
+
+      cout << "Recorded edge length " << i << endl;
 
     }
 
