@@ -81,7 +81,7 @@ void printRecords(vector<vector<float> > records){
 }
 
 bool symbolic(int index){
-  if(index == 1 || index == 2 || index == 3){
+  if(index == 1 || index == 2 || index == 3 || index == 6 || index == 20 || index == 21){
     return true;
   }
   return false;
@@ -199,15 +199,13 @@ int main(){
     int record_count, record_size;
     init_dataset(record_count, record_size, records, record_types);
 
-    cout <<  record_count << endl;
-
-
-
-    //double edge = edgeweight(records[0], records[4]);
+    cout << "Processing: " << record_count << " records" << endl;
 
     vector<range> ranges = attributeRanges(records);
 
     int i, j;
+
+    auto algostart = high_resolution_clock::now(); 
 
     /*
     scale values
@@ -249,12 +247,9 @@ int main(){
       edgematrix[i].weight = -1.0;
     }
 
-
     //start kernel
     edgeGeneration<<<16, 64>>>(edgematrix, recordmatrix, record_size, record_count, k);
     cudaDeviceSynchronize();
-
-    cout << "Done edge generation\n";
 
     /*
     begin clustering approach
@@ -377,30 +372,6 @@ int main(){
     }
 
     /*
-
-    for(i = 0; i < 10; i++){
-      cout << locavgs[i] << ": ";
-      for(j = 0; j < 15; j++){
-        int curredge = getMatrixIndex(k, i, j);
-        cout << setprecision(4) << "( " << edgelengths[curredge] << " " << edgematrix[curredge].vertex << ") ";
-      }
-      cout << endl;
-    }
-
-    cout << "-----------------------\n";
-
-    for(i = record_count-10; i < record_count; i++){
-      cout << locavgs[i] << ": ";
-      for(j = 0; j < 15; j++){
-        int curredge = getMatrixIndex(k, i, j);
-        cout << setprecision(4) << "( " << edgelengths[curredge] << " " << edgematrix[curredge].vertex << ") ";
-      }
-      cout << endl;
-    }
-
-    */
-
-    /*
     ranking system
     iterate over each record, take percentage of connections to same type
     e.g. if record is connected to 4 others of same type, 1 of different type, rank is 80%
@@ -462,6 +433,10 @@ int main(){
 
     cout << "Accuracy: " << (accuracytotal / record_count) << endl;
     cout << "Sensitivity: " << (sensitivitytotal / record_count) << endl;
+
+    auto algostop = high_resolution_clock::now();
+    auto duration = duration_cast<microseconds>(algostop - algostart); 
+    cout << "Algorithm Finished in: " << (duration.count() * .000001) << "s" << endl; 
 
 
     return 0;
