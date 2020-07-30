@@ -233,6 +233,8 @@ int main(){
     gpuErrchk(cudaMallocManaged(&edgematrix, edge_msize * sizeof(edgedata)));
     gpuErrchk(cudaMallocManaged(&recordmatrix, records_msize * sizeof(float)));
 
+    cout << "CUDA allocation finished\n";
+
     //copy records to a unified array from stl vector (so it can work on cuda kernel)
     int curr = 0;
     for(i = 0; i < records.size(); i++){
@@ -250,6 +252,8 @@ int main(){
     //start kernel
     edgeGeneration<<<16, 64>>>(edgematrix, recordmatrix, record_size, record_count, k);
     cudaDeviceSynchronize();
+
+    cout << "edge generation finished\n";
 
     /*
     begin clustering approach
@@ -339,6 +343,8 @@ int main(){
 
     }
 
+    cout << "location simulation finished\n";
+
     //now we start cutting edges with higher lengths than others, as such, k value with vary vertex to vertex
 
     //take average of all edge lengths (as of now, it is total of lengths after all trials)
@@ -370,6 +376,8 @@ int main(){
         };
       }
     }
+
+    cout << "edge cutting finished\n";
 
     /*
     ranking system
