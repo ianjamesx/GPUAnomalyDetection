@@ -311,8 +311,11 @@ int main(){
             //add force from neighbor vertex
             force += ((p[i] - p[compvertex]) * edgematrix[compedge].weight);
           }
+
+          if(i % 1000 == 0){
+            cout << "In reaction " << i << endl;
+          }
     
-  
           //account for gain μ
           force *= (1/(valenceweight+1));
   
