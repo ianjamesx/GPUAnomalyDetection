@@ -284,7 +284,7 @@ int main(){
         p[i] = rand() % (record_count*25);
       }
 
-      cout << "Assigned to random " << i << endl;
+      cout << "Assigned to random " << t << endl;
   
       int l;
       for(l = 0; l < 5; l++){
@@ -320,10 +320,12 @@ int main(){
           p[i] -= force;
           
         }
+
+        cout << "Reacted to force " << l << endl;
   
       }
 
-      cout << "Moved on force " << i << endl;
+      cout << "Moved on force " << t << endl;
   
       //after moving vertices, record lengths of each edge
       for(i = 0; i < record_count; i++){
@@ -345,7 +347,7 @@ int main(){
         
       }
 
-      cout << "Recorded edge length " << i << endl;
+      cout << "Recorded edge length " << t << endl;
 
     }
 
