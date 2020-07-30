@@ -140,18 +140,20 @@ void generateNumericRecords(vector<vector<string> > rvect, vector<vector<float> 
         //save type of record
         types.push_back(getPropertyIndex(rvect[i][record_size], record_types));
     }
-
+/*
     for(i = 0; i < record_types.size(); i++){
       cout << i << ": " << record_types[i] << endl;
     }
-
+*/
 }
 
 void init_dataset(int &record_count, int &record_size, vector<vector<float> > &records, vector<int> &types){
 
+    //vector<vector<string> > record_tokens = readfile("./dataset/simple2.data");
+
     //vector<vector<string> > record_tokens = readfile("./dataset/sample.data");
-    vector<vector<string> > record_tokens = readfile("./dataset/s500.data");
-    //vector<vector<string> > record_tokens = readfile("./dataset/sample_5500.data");
+    //vector<vector<string> > record_tokens = readfile("./dataset/s500.data");
+    vector<vector<string> > record_tokens = readfile("./dataset/sample_5500.data");
     //vector<vector<string> > record_tokens = readfile("./dataset/sample_45214.data");
     //vector<vector<string> > record_tokens = readfile("./dataset/kddcup_10percent.data");
 
@@ -160,6 +162,8 @@ void init_dataset(int &record_count, int &record_size, vector<vector<float> > &r
     //allocate space for number of records * number of attributes per record (e.g 500k * 42)
     record_count = record_tokens.size();
     record_size = record_tokens[0].size()-1;
+
+    cout << "Read file\n";
 
     generateNumericRecords(record_tokens, records, types);
 
