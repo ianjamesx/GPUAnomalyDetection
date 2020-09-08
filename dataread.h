@@ -149,12 +149,13 @@ void generateNumericRecords(vector<vector<string> > rvect, vector<vector<float> 
 
 void init_dataset(int &record_count, int &record_size, vector<vector<float> > &records, vector<int> &types){
 
-    //vector<vector<string> > record_tokens = readfile("./dataset/simple2.data");
+    //vector<vector<string> > record_tokens = readfile("./dataset/3rec.data");
 
     //vector<vector<string> > record_tokens = readfile("./dataset/sample.data");
     //vector<vector<string> > record_tokens = readfile("./dataset/s500.data");
-    vector<vector<string> > record_tokens = readfile("./dataset/sample_5500.data");
-    //vector<vector<string> > record_tokens = readfile("./dataset/sample_45214.data");
+    //vector<vector<string> > record_tokens = readfile("./dataset/sample_5500.data");
+    vector<vector<string> > record_tokens = readfile("./dataset/sample_45214.data");
+    //vector<vector<string> > record_tokens = readfile("./dataset/sample_10000.data");
     //vector<vector<string> > record_tokens = readfile("./dataset/kddcup_10percent.data");
 
     //vector<vector<string> > record_tokens = readfile("./dataset/nsl20.data");
