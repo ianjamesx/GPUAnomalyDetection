@@ -1,0 +1,9 @@
+Iterations: 36
+Runtime: 40.2062
+TN: 4
+FN: 9285
+TP: 234
+FP: 6
+sensitivity (TPR): 0.0245824
+accuracy: 0.0249764
+Attacks: 9519, normal: 10

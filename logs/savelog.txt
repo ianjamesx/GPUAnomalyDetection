@@ -1,0 +1,45 @@
+Iterations: 36
+Runtime: 11.284
+TN: 5469
+FN: 23
+TP: 10
+FP: 27
+sensitivity (TPR): 0.30303
+accuracy: 0.990957
+Attacks: 33, normal: 5496
+
+--------------------------------------
+
+Iterations: 36
+Runtime: 10.6795
+TN: 5440
+FN: 10
+TP: 72
+FP: 30
+sensitivity (TPR): 0.878049
+accuracy: 0.992795
+Attacks: 82, normal: 5470
+
+------------------------------------
+
+Iterations: 36
+Runtime: 11.4601
+TN: 5395
+FN: 12
+TP: 192
+FP: 26
+sensitivity (TPR): 0.941176
+accuracy: 0.993244
+Attacks: 204, normal: 5421
+
+-----------------------------------
+
+Iterations: 36
+Runtime: 11.0535
+TN: 5074
+FN: 48
+TP: 333
+FP: 22
+sensitivity (TPR): 0.874016
+accuracy: 0.987219
+Attacks: 381, normal: 5096
