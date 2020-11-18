@@ -1,0 +1,183 @@
+*could ask size of bitmap given block and disk size (or any of the three)
+155 quiz: 6.2
+
+1)
+
+Linux system i-Node. Picture shows 10 direct addresses, 4 bytes each, block size is 2kb
+What is largest possible file size?
+
+2kb / 4 bytes = 2^9 = 512 block data
+512 + 10 = 522 block data (10 for direct addresses)
+2kb * 522 = 1044kb
+
+
+2) (slide 15)
+
+FIFO - Replace the oldest page frame
+
+NRU - removes a page at random from the lowest numbered nonempty class 
+(lowered numbered - non empty, non modified) in this case if read and modified bits
+are 0,0, this page is least important, if 1,1 this page is most important
+
+LRU - Replace the page that has not been used for the longest period of time
+
+Second Chance - modified fifo. If the oldest page’s R = 0, it is old and not referenced. So it
+remove from the page frame. If the oldest page’s R = 1, it is old but referenced. So set R = 0
+and set the page from oldest to newest page
+
+Example given
+
+fifo: 2
+NRU: 0
+LRU: 1
+SC: 0
+
+3)
+
+Design issues for paging system (slide 16.17)
+Analysis of 
+S: average size of process in bytes
+P: size of page in bytes
+E: each page table entry needs in bytes
+
+average number of pages per process: S/P
+Average page table space: (S/P) * E
+Wasted memory in last page of process: P/2
+
+Overhead(P) = (SE) / P   +   P/2
+Overhead(P) = -(SE) / p^2  + 1/2 = 0
+
+Optimal Page Size: P = Sqrt(2SE)
+
+
+4)
+
+Bitmap / free list & linked list (18.29) (12.26)
+
+A disk with n block requires a bitmap with n bits
+
+System using bitmap, lets say block size is 2kb, system uses 2^16 blocks. What is disk size
+
+disksize/blocksize * 1/8 * 1/8 = bitmap size
+bitmapsize * 8 * 8 * blocksize = disk size
+
+2kb = 2^11
+disk size = 2^16 * 8 * 8 * 2^11 = 2^33 = 8gb
+OR THE LOGICAL APPROACH
+//(Dans test) 2^27 * 8 = 2^30 bytes = 1gb
+
+2^18 * 2^11 = 2^27
+2^27 * 8 = 2^30
+2^30 * 2^11 = 2^42 = 2tb max disk
+
+free list / linked list
+
+32 bit block number and 2kb block size, system uses 2^28 blocks, what is disk size?
+
+disk size = 2^11 * 8 / 32
+
+
+5)
+
+Consider 5 processes
+
+    allo.   need    avail
+P0  0 1 0   7 4 3   3 3 2
+P1  2 0 0   1 2 2   
+P2  3 0 2   6 0 0
+P3  2 1 1   0 1 1
+P4  0 0 2   4 3 1
+
+TO SEE IF REQUEST WILL BE GRANTED
+
+Lets say P1 requests (1, 0, 2)
+
+Step 1 check if request <= need (at P1)
+Step 2 check if request <= avail
+
+Step 3 
+Avail = avail - request
+allo[i] = allo[i] + request[i]
+need[i] = need[i] - request[i]
+
+After this, run safety algorithm again, if safe, grant request
+
+Safety algorithm:
+
+For each process:
+
+IF need[i] > avail
+    process i must wait, skip
+else if need[i] <= avail
+    avail = avail + allo[i]
+    process i is finished
+
+Repeat, if you find a process i such that
+    need[i] > avail
+and all other processes are terminated, then state is not safe
+
+If all processes can be satisfied by avail, then it is safe
+
+
+
+
+8)
+
+block size is 2kb, 32 bit disk block
+
+Maximum blocks needed to keep track of 128gb disk with linked list?
+8 * 2^11 / 32 - 512 - 1 = 511
+2^37 / 2^11 = 2^26
+2^26 / 511 = 131329 blocks
+
+blocks needed for 128gb disk with bitmap
+2^37/2^11 = 2^26
+2^26/8 = 2^23
+2^23/2^11 = 2^12 = 4096
+
+Max disk
+2^32*2^11 = 2^43 = 8tb
+
+9)
+
+(slide 18)
+
+Log-structured file systems are based on the
+assumption that files are cached in main memory.
+
+In LSF, each i-node is not at a fixed location; they are
+written to the log.
+LFS uses a data structure called an i-node map to
+maintain the current location of each i-node for each file.
+Opening a file consists of using the map to locate the inode for the file.
+
+
+10)
+
+Deadlock detection algorithm
+
+(slide 21)
+
+Given Vectors E, A, matrices C, R
+
+E is max (maybe)
+
+Find a row in R which is less than or equal to A
+(call this row i)
+
+If such process is found, add ith row of C to A,
+mark process and go back to step 1
+
+If A is not bigger than any unfinished process, deadlock
+
+If you can find any way to finish all processes, then no deadlock
+
+
+
+11)
+
+Minimum value of x and y for system to be in safe state?
+x = 1 y = 2
+You need x to be at least 1 to run P4
+You need y to be at least 2 to run P1
+
