@@ -2,6 +2,8 @@
 
 Extension of NSF REU Research experiment, developed under Salisbury University Henson Grant Research Program
 
+Developed by Ian James Thomas, directed by Dr. Enyue Lu
+
 Requires C++17, Nvidia CUDA, CUDA enabled GPU
 
 To run either the SUBDUE implementation or the Barycentric implementation.
